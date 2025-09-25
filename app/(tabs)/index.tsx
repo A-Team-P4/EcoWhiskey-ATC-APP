@@ -5,9 +5,11 @@ import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { Button } from 'react-native-paper';
 
 export default function HomeScreen() {
+   const router = useRouter();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -18,8 +20,10 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
+        <Button onPress={() => router.push('/register')}>Go to Register</Button>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
+   
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
