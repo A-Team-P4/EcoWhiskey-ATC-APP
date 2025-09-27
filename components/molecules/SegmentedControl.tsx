@@ -7,7 +7,7 @@ import { Typography } from '../atoms/Typography';
 interface SegmentedControlProps {
   title: string;
   value: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: any) => void; 
   options: Array<{ value: string; label: string; }>;
 }
 

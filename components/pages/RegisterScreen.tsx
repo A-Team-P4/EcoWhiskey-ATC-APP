@@ -2,6 +2,8 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
+import { useRegistration } from '@/app/hooks/useRegistration';
+import { RegistrationData } from '@/app/interfaces/user';
 import { AppHeader } from '../organisms/AppHeader';
 import { RegistrationForm } from '../organisms/RegistrationForm';
 import { WelcomeSection } from '../organisms/WelcomeSection';
@@ -26,27 +28,25 @@ import ResponsiveLayout from '../templates/ResponsiveLayout';
 //   roundness: 12,
 // };
 
-interface RegistrationData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  accountType: string;
-  school?: string;
-}
+
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const registrationMutation = useRegistration();
 
-  const handleRegistration = async (data: RegistrationData) => {
-    // Here you would typically make an API call
-    console.log('Registration data:', data);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // If you want to throw an error to test error handling:
-    // throw new Error('Registration failed');
+   const handleRegistration = async (data: RegistrationData) => {
+    return new Promise<void>((resolve, reject) => {
+      registrationMutation.mutate(data, {
+        onSuccess: () => {
+          resolve();
+          handleRegistrationSuccess();
+        },
+        onError: (error: any) => {
+          reject(error);
+          handleRegistrationError(error?.response?.data?.message || 'Ocurrió un error durante el registro');
+        }
+      });
+    });
   };
 
   const handleRegistrationSuccess = () => {
@@ -80,16 +80,16 @@ export default function RegisterScreen() {
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
           >
-            <WelcomeSection
-              title="Únete a nuestra plataforma"
-              subtitle="Crea tu cuenta para comenzar tu experiencia educativa"
-            />
-            
-            <RegistrationForm
-              onSubmit={handleRegistration}
-              onSuccess={handleRegistrationSuccess}
-              onError={handleRegistrationError}
-            />
+
+          <WelcomeSection
+            title="Únete a nuestra plataforma"
+            subtitle="Crea tu cuenta para comenzar tu experiencia educativa"
+          />
+
+          <RegistrationForm
+            onSubmit={handleRegistration}
+            isLoading={registrationMutation.isPending}
+          />
           </ScrollView>
         </SafeAreaView>
       {/* </PaperProvider> */}
