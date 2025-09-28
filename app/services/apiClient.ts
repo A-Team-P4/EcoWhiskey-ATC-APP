@@ -1,7 +1,7 @@
 // services/api.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { RegistrationData } from '../interfaces/user';
+import { AuthResponse, LoginCredentials, RegistrationData } from '../interfaces/user';
 
 const API_BASE_URL = __DEV__ 
    ? 'http://localhost:8000' 
@@ -60,6 +60,11 @@ apiClient.interceptors.response.use(
 // Registration function
 export const registerUser = async (userData: RegistrationData) => {
   const response = await apiClient.post('/users', userData);
+  return response.data;
+};
+// Login function
+export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
   return response.data;
 };
 

@@ -5,12 +5,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
-import "../global.css";
+import '../global.css';
 import { queryClient } from './lib/queryClient';
-
-
-
-
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,24 +14,23 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-    const paperTheme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+  const paperTheme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
   const navTheme = colorScheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
-
 
   return (
     // <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <PaperProvider theme={paperTheme}>
-        <QueryClientProvider client={queryClient}>
-      {/* <ThemeProvider value={navTheme}> */}
-      <Stack>
-         <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-       
-      </Stack>
-      <StatusBar style="auto" />
-    {/* </ThemeProvider> */}
-      {/* </ThemeProvider> */}
+    <PaperProvider theme={paperTheme}>
+      <QueryClientProvider client={queryClient}>
+        {/* <ThemeProvider value={navTheme}> */}
+        <Stack>
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        </Stack>
+        <StatusBar style="auto" />
+        {/* </ThemeProvider> */}
+        {/* </ThemeProvider> */}
       </QueryClientProvider>
     </PaperProvider>
   );
