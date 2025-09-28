@@ -1,8 +1,9 @@
-import { useRegistration } from '@/app/hooks/useRegistration';
 import { RegistrationData } from '@/app/interfaces/user';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
+import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { Dropdown } from '../molecules/Dropdown';
 import { FormInput } from '../molecules/FormInput';
@@ -41,19 +42,12 @@ interface RegistrationFormProps {
   isLoading?: boolean;
 }
 
-export const RegistrationForm: React.FC<RegistrationFormProps> = ({
-  onSubmit,
-  isLoading = false
-}) => {
-
+export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isLoading = false }) => {
   const { width } = useWindowDimensions();
-
   const isMobile = width < 768;
+  const router = useRouter();
 
-    const registrationMutation = useRegistration();
-  
-
-  // Form state
+  //* Hooks
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -61,12 +55,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [school, setSchool] = useState('');
   const [accountType, setAccountType] = useState<'student' | 'instructor'>('student');
-  
-  // UI state
   const [errors, setErrors] = useState<FormErrors>({});
- //const [isLoading, setIsLoading] = useState(false);
-  
-  // Validation logic
+
+  //* Helpers
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -100,7 +91,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
   
-  // Event handlers
+  //* Handlers
   const handleRegister = async () => {
     if (!validateForm()) return;
 
@@ -116,7 +107,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
     await onSubmit(registrationData);
   };
 
-  // Field change handlers with error clearing
   const handleFirstNameChange = (value: string) => {
     setFirstName(value);
     if (errors.firstName && value.trim()) {
@@ -246,7 +236,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         />
       </View>
       
-      <Spacer size={15} />
+      <Spacer size={4} />
       
       <View style={isMobile ? formStyles.buttonContainerMobile : formStyles.buttonContainerDesktop}>
         <ActionButton
@@ -255,6 +245,26 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
           loading={isLoading}
           disabled={isLoading}
         />
+      </View>
+
+      <Spacer size={16} />
+
+      <View style={{ alignItems: 'center' }}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/connect')}
+          disabled={isLoading}
+        >
+          <Typography
+            variant="caption"
+            style={{
+              color: '#000',
+              textDecorationLine: 'underline',
+              opacity: isLoading ? 0.5 : 1
+            }}
+          >
+            ¿Ya tienes cuenta? Inicia sesión
+          </Typography>
+        </TouchableOpacity>
       </View>
     </View>
   );

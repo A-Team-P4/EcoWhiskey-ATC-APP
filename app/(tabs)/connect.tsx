@@ -130,7 +130,7 @@ export default function ApiConnectionScreen() {
             {
               borderColor: theme === 'light' ? '#e2e8f0' : '#1e293b',
               color: palette.text,
-              backgroundColor: theme === 'light' ? '#ffffff' : '#0f172a',
+              backgroundColor: theme === 'light' ? '#FFFFFF' : '#0f172a',
             },
           ]}
         />

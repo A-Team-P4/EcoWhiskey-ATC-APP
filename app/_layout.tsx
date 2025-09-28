@@ -28,7 +28,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
       {/* <ThemeProvider value={navTheme}> */}
       <Stack>
-         <Stack.Screen name="register" options={{ title: "Register" }} />
+         <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
        

@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { Button } from 'react-native-paper';
 
 interface ActionButtonProps {
@@ -19,12 +18,12 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   disabled = false,
   icon
 }) => {
-  const getButtonStyle = () => {
+  const getButtonClassName = () => {
     switch (variant) {
-      case 'primary': return buttonStyles.primaryButton;
-      case 'secondary': return buttonStyles.secondaryButton;
-      case 'outline': return buttonStyles.outlineButton;
-      default: return buttonStyles.primaryButton;
+      case 'primary': return 'rounded-md bg-black shadow-lg';
+      case 'secondary': return 'rounded-md bg-gray-400';
+      case 'outline': return 'rounded-md border-black';
+      default: return 'rounded-md bg-black shadow-lg';
     }
   };
 
@@ -52,9 +51,9 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     <Button
       mode={getButtonMode()}
       onPress={onPress}
-      style={getButtonStyle()}
-      contentStyle={buttonStyles.buttonContent}
-      labelStyle={buttonStyles.buttonLabel}
+      className={getButtonClassName()}
+      contentStyle={{ paddingVertical: 8 }}
+      labelStyle={{ fontSize: 17, fontWeight: '600', color: '#FFFFFF' }}
       loading={loading}
       disabled={disabled || loading}
       icon={icon}
@@ -65,30 +64,3 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   );
 };
 
-const buttonStyles = StyleSheet.create({
-  primaryButton: {
-    borderRadius: 12,
-    backgroundColor: '#000000', 
-    elevation: 3,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    backgroundColor: '#8E8E93',
-  },
-  outlineButton: {
-    borderRadius: 12,
-    borderColor: '#000000', 
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  buttonLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#FFFFFF', 
-  },
-});

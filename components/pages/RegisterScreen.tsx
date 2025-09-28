@@ -1,40 +1,19 @@
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-
 import { useRegistration } from '@/app/hooks/useRegistration';
 import { RegistrationData } from '@/app/interfaces/user';
-import { AppHeader } from '../organisms/AppHeader';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Alert, ScrollView } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { RegistrationForm } from '../organisms/RegistrationForm';
 import { WelcomeSection } from '../organisms/WelcomeSection';
 import ResponsiveLayout from '../templates/ResponsiveLayout';
-
-// const appleTheme = {
-//   ...MD3LightTheme,
-//   colors: {
-//     ...MD3LightTheme.colors,
-//     primary: '#007AFF',
-//     onPrimary: '#FFFFFF',
-//     primaryContainer: '#E3F2FD',
-//     onPrimaryContainer: '#007AFF',
-//     secondary: '#8E8E93',
-//     surface: '#FFFFFF',
-//     onSurface: '#1C1C1E',
-//     background: '#F2F2F7',
-//     onBackground: '#1C1C1E',
-//     error: '#FF3B30',
-//     outline: '#E5E5EA',
-//   },
-//   roundness: 12,
-// };
-
 
 
 export default function RegisterScreen() {
   const router = useRouter();
   const registrationMutation = useRegistration();
 
-   const handleRegistration = async (data: RegistrationData) => {
+  const handleRegistration = async (data: RegistrationData) => {
     return new Promise<void>((resolve, reject) => {
       registrationMutation.mutate(data, {
         onSuccess: () => {
@@ -68,28 +47,17 @@ export default function RegisterScreen() {
   return (
     <ResponsiveLayout>
       {/* <PaperProvider theme={appleTheme}> */}
-        <SafeAreaView style={styles.safeArea}>
-          <AppHeader
-            title="Crear cuenta"
-            showBackButton
-            onBackPress={handleReturnToLogin}
-          />
-          
-          <ScrollView 
-            style={styles.container}
-            contentContainerStyle={styles.contentContainer}
+        <SafeAreaView className="flex-1 bg-white">
+          <ScrollView
+            className="flex-1 bg-white"
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
           >
-
-          <WelcomeSection
-            title="Únete a nuestra plataforma"
-            subtitle="Crea tu cuenta para comenzar tu experiencia educativa"
-          />
-
-          <RegistrationForm
-            onSubmit={handleRegistration}
-            isLoading={registrationMutation.isPending}
-          />
+            <WelcomeSection/>
+            <RegistrationForm
+              onSubmit={handleRegistration}
+              isLoading={registrationMutation.isPending}
+            />
           </ScrollView>
         </SafeAreaView>
       {/* </PaperProvider> */}
@@ -97,17 +65,3 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-});
