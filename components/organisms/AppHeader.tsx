@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Platform, StatusBar, TouchableOpacity, View } from 'react-native';
 import { Icon } from '../atoms/Icon';
 import { Typography } from '../atoms/Typography';
 
@@ -18,19 +18,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
-      <View style={headerStyles.header}>
-        <View style={headerStyles.leftElement}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-gray-200" style={{ paddingTop: Platform.OS === 'ios' ? 16 : StatusBar.currentHeight ? StatusBar.currentHeight + 16 : 40 }}>
+        <View className="w-9 items-start">
           {showBackButton && onBackPress && (
-            <TouchableOpacity onPress={onBackPress} style={headerStyles.backButton}>
+            <TouchableOpacity onPress={onBackPress} className="p-1">
               <Icon name="chevron-back" size={28} color="#007AFF" />
             </TouchableOpacity>
           )}
         </View>
         
-        <Typography variant="h3" style={headerStyles.headerTitle}>{title}</Typography>
+        <Typography variant="h3">{title}</Typography>
         
-        <View style={headerStyles.rightElement}>
+        <View className="w-9 items-end">
           {rightElement}
         </View>
       </View>
@@ -38,31 +38,3 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   );
 };
 
-const headerStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F2F2F7',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#C6C6C8',
-    paddingTop: Platform.OS === 'ios' ? 16 : StatusBar.currentHeight ? StatusBar.currentHeight + 16 : 40,
-  },
-  leftElement: {
-    width: 36,
-    alignItems: 'flex-start',
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-  },
-  rightElement: {
-    width: 36,
-    alignItems: 'flex-end',
-  },
-});

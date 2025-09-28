@@ -1,6 +1,9 @@
+import { RegistrationData } from '@/app/interfaces/user';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
+import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { Dropdown } from '../molecules/Dropdown';
 import { FormInput } from '../molecules/FormInput';
@@ -15,14 +18,7 @@ interface FormErrors {
   school?: string;
 }
 
-interface RegistrationData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  accountType: string;
-  school?: string;
-}
+
 
 const schoolOptions = [
   { label: 'AENSA - Academia de Enseñanza Aeronáutica', value: 'aensa', location: 'San José' },
@@ -43,35 +39,25 @@ const schoolOptions = [
 
 interface RegistrationFormProps {
   onSubmit: (data: RegistrationData) => Promise<void>;
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
+  isLoading?: boolean;
 }
 
-export const RegistrationForm: React.FC<RegistrationFormProps> = ({
-  onSubmit,
-  onSuccess,
-  onError
-}) => {
-
+export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isLoading = false }) => {
   const { width } = useWindowDimensions();
-
   const isMobile = width < 768;
-  
+  const router = useRouter();
 
-  // Form state
+  //* Hooks
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [school, setSchool] = useState('');
-  const [accountType, setAccountType] = useState('student');
-  
-  // UI state
+  const [accountType, setAccountType] = useState<'student' | 'instructor'>('student');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Validation logic
+
+  //* Helpers
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -105,50 +91,22 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
   
-  // Event handlers
+  //* Handlers
   const handleRegister = async () => {
     if (!validateForm()) return;
-    
-    setIsLoading(true);
-    try {
-      const registrationData: RegistrationData = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        accountType,
-        ...(school.trim() && { school: school.trim() })
-      };
-      
-      await onSubmit(registrationData);
-      
-      // Call success callback if provided, otherwise show default alert
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        Alert.alert(
-          'Registro exitoso',
-          'Tu cuenta ha sido creada correctamente'
-        );
-      }
-      
-    } catch (error) {
-      const errorMessage = 'Ocurrió un error durante el registro. Intenta nuevamente.';
-      
-      // Call error callback if provided, otherwise show default alert
-      if (onError) {
-        onError(errorMessage);
-      } else {
-        Alert.alert('Error', errorMessage);
-      }
-      
-      console.error('Registration error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+
+    const registrationData: RegistrationData = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      accountType,
+      ...(school.trim() && { school: school.trim() })
+    };
+
+    await onSubmit(registrationData);
   };
 
-  // Field change handlers with error clearing
   const handleFirstNameChange = (value: string) => {
     setFirstName(value);
     if (errors.firstName && value.trim()) {
@@ -278,7 +236,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         />
       </View>
       
-      <Spacer size={15} />
+      <Spacer size={4} />
       
       <View style={isMobile ? formStyles.buttonContainerMobile : formStyles.buttonContainerDesktop}>
         <ActionButton
@@ -287,6 +245,26 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
           loading={isLoading}
           disabled={isLoading}
         />
+      </View>
+
+      <Spacer size={16} />
+
+      <View style={{ alignItems: 'center' }}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/connect')}
+          disabled={isLoading}
+        >
+          <Typography
+            variant="caption"
+            style={{
+              color: '#000',
+              textDecorationLine: 'underline',
+              opacity: isLoading ? 0.5 : 1
+            }}
+          >
+            ¿Ya tienes cuenta? Inicia sesión
+          </Typography>
+        </TouchableOpacity>
       </View>
     </View>
   );

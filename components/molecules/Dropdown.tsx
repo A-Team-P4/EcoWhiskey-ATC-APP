@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   dropdownTitle: {
     fontWeight: '600',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   searchInput: {
     backgroundColor: '#FFFFFF',
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E5EA',
   },
   optionItemSelected: {
-    backgroundColor: '#F0F8FF',
+    backgroundColor: '#FFFFFF',
   },
   optionText: {
     flex: 1,

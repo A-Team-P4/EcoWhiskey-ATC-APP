@@ -7,7 +7,7 @@ import { Typography } from '../atoms/Typography';
 interface SegmentedControlProps {
   title: string;
   value: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: any) => void; 
   options: Array<{ value: string; label: string; }>;
 }
 
@@ -32,7 +32,7 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
         style={segmentStyles.segmentedButtons}
         theme={{
           colors: {
-            secondaryContainer: '#007AFF', // Selected background color
+            secondaryContainer: '#000', // Selected background color
             onSecondaryContainer: '#FFFFFF', // Selected text color
             outline: '#E5E5EA', // Border color
             onSurface: '#1C1C1E', // Unselected text color
