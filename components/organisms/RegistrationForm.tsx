@@ -251,7 +251,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
 
       <View style={{ alignItems: 'center' }}>
         <TouchableOpacity
-          onPress={() => router.replace('/(tabs)/connect')}
+          onPress={() => router.replace('/login')}
           disabled={isLoading}
         >
           <Typography

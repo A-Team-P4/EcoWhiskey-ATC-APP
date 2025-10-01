@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 
@@ -74,8 +74,13 @@ export default function ApiConnectionScreen() {
           ].filter(Boolean).join(' ');
 
           setStatus(statusLabel || `${caughtError.response.status}`);
-          setError('La API respondio con un codigo de error.');
 
+          const statusCode = caughtError.response.status;
+          setError(
+            statusCode === 401
+              ? 'No autorizado: verifica tus credenciales o token.'
+              : 'La API respondio con un codigo de error.'
+          );
           const responseData = caughtError.response.data;
           setPayloadPreview(
             typeof responseData === 'string'
@@ -232,5 +237,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-
-
