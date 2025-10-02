@@ -2,10 +2,12 @@ import { useLogin } from '@/app/hooks/useLogin';
 import { LoginCredentials } from '@/app/interfaces/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoginForm } from '../organisms/LoginForm';
 import ResponsiveLayout from '../templates/ResponsiveLayout';
+
+
 
 const LoginScreen: React.FC = () => {
   const router = useRouter();
@@ -18,9 +20,7 @@ const LoginScreen: React.FC = () => {
         onSuccess: () => {
           setServerError(null);
           resolve();
-          Alert.alert('Bienvenido', 'Inicio de sesion exitoso', [
-            { text: 'Continuar', onPress: () => router.replace('/(tabs)') },
-          ]);
+          router.replace('/(tabs)/ATCTrainingTab');
         },
         onError: (error: any) => {
           const statusCode = error?.response?.status;

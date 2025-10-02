@@ -13,8 +13,17 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  accountType: 'student' | 'instructor';
+  school?: string;
+}
+
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken?: string;
-  [key: string]: unknown;
+  user: User;
 }

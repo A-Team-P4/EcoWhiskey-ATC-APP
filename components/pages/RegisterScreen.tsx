@@ -28,13 +28,18 @@ export default function RegisterScreen() {
     });
   };
 
-  const handleRegistrationSuccess = () => {
-    Alert.alert(
-      'Registro exitoso',
-      'Tu cuenta ha sido creada correctamente',
-      [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-    );
-  };
+ const handleRegistrationSuccess = () => {
+  Alert.alert(
+    'Registro exitoso',
+    'Tu cuenta ha sido creada correctamente',
+    [
+      { 
+        text: 'OK', 
+        onPress: () => router.replace('/login') 
+      }
+    ]
+  );
+};
 
   const handleRegistrationError = (errorMessage: string) => {
     Alert.alert('Error', errorMessage);

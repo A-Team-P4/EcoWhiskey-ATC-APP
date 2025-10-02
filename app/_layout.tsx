@@ -3,6 +3,7 @@ import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultThem
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 import '../global.css';
@@ -18,20 +19,18 @@ export default function RootLayout() {
   const navTheme = colorScheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
 
   return (
-    // <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-    <PaperProvider theme={paperTheme}>
-      <QueryClientProvider client={queryClient}>
-        {/* <ThemeProvider value={navTheme}> */}
-        <Stack>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-        {/* </ThemeProvider> */}
-        {/* </ThemeProvider> */}
-      </QueryClientProvider>
-    </PaperProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider theme={paperTheme}>
+        <QueryClientProvider client={queryClient}>
+          <Stack>
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="register" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="atc-practice" options={{ headerShown: false,animation:"fade" }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </QueryClientProvider>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -8,16 +8,18 @@ export const useLogin = () => {
   return useMutation<AuthResponse, unknown, LoginCredentials>({
     mutationFn: (credentials) => loginUser(credentials),
     onSuccess: async (data) => {
-      if (data?.token) {
+      console.log(data)
+      if (data?.accessToken) {
+        
         try {
-          await AsyncStorage.setItem('@auth_token', data.token);
+          await AsyncStorage.setItem('@auth_token', data?.accessToken);
         } catch (error) {
-          console.warn('Failed to persist auth token', error);
+         // console.warn('Failed to persist auth token', error);
         }
       }
     },
     onError: (error) => {
-      console.error('Login failed:', error);
+      //console.error('Login failed:', error);
     },
   });
 };

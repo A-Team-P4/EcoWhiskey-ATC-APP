@@ -57,7 +57,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
 
   return (
     <View style={styles.container}>
-      <Typography variant="titleLarge">Bienvenido de nuevo</Typography>
+      <Typography variant="h1">Bienvenido</Typography>
       <Spacer size={8} />
       <Typography variant="body" style={styles.subtitle}>
         Ingresa tus credenciales para continuar
@@ -120,6 +120,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
           </Typography>
         </TouchableOpacity>
       </View>
+
+      
     </View>
   );
 };
