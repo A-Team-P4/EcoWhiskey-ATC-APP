@@ -1,4 +1,4 @@
-import { LoginCredentials } from '@/app/interfaces/user';
+import { LoginCredentials } from '@/interfaces/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';

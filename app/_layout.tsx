@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 import '../global.css';
-import { queryClient } from './lib/queryClient';
+import { queryClient } from '../lib/queryClient';
 
 export const unstable_settings = {
   anchor: '(tabs)',

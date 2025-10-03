@@ -1,5 +1,6 @@
-import { useLogin } from '@/app/hooks/useLogin';
-import { LoginCredentials } from '@/app/interfaces/user';
+
+import { LoginCredentials } from '@/interfaces/user';
+import { useLogin } from '@/query_hooks/useLogin';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';

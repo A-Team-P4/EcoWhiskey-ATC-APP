@@ -1,23 +1,112 @@
+import { Dropdown } from '@/components/molecules/Dropdown';
+import { MultiSelectDropdown } from '@/components/molecules/MultiSelectDropdown';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
+import { AIRPORTS, CONDITIONS, OBJECTIVES, VISIBILITY } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
+import { SegmentedButtons, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
+
+
+// Generate QNH values from 980 to 1050
+const QNH_VALUES = Array.from({ length: 71 }, (_, i) => {
+  const value = 980 + i;
+  return { label: `${value} hPa`, value: value.toString() };
+});
+
+// Generate wind directions (0° to 350° in 10° increments)
+const WIND_DIRECTIONS = Array.from({ length: 36 }, (_, i) => {
+  const value = i * 10;
+  return { label: `${value.toString().padStart(3, '0')}°`, value: value.toString().padStart(3, '0') };
+});
+
+// Generate wind speeds (0 to 50 knots)
+const WIND_SPEEDS = Array.from({ length: 51 }, (_, i) => {
+  return { label: `${i} ${i === 1 ? 'nudo' : 'nudos'}`, value: i.toString() };
+});
+
+
 
 export default function FlightContextScreen() {
   const router = useRouter();
-  const [context, setContext] = useState('');
+  const [activeTab, setActiveTab] = useState('manual');
+  const [departure, setDeparture] = useState('');
+  const [arrival, setArrival] = useState('');
+
+  // Meteo object state
+  const [meteo, setMeteo] = useState({
+    condition: '',
+    vis: '',
+    qnh: '',
+    windDirection: '',
+    windSpeed: '',
+  });
+
+  // Objectives state - can be multiple selections
+  const [objectives, setObjectives] = useState<string[]>([]);
+
+  // Training context mutation
+  const { mutate: createContext, isPending } = useCreateTrainingContext();
 
   const handleStart = () => {
-    // TODO: Save context to global state or pass as parameter
-    router.push('/atc-practice');
+    // Construct wind as "direction/speed"
+    const wind = meteo.windDirection && meteo.windSpeed
+      ? `${meteo.windDirection}/${meteo.windSpeed}`
+      : '';
+
+    // Construct route as "departure-arrival"
+    const route = departure && arrival ? `${departure}-${arrival}` : '';
+
+    // Validate required fields
+    if (!route) {
+      Alert.alert('Error', 'Por favor seleccione aeropuertos de salida y llegada');
+      return;
+    }
+
+    // Prepare training configuration
+    const trainingConfig = {
+      route,
+      meteo: {
+        ...meteo,
+        wind,
+      },
+      objectives,
+    };
+
+    console.log('📤 Sending training config:', trainingConfig);
+
+    // Send to backend
+    createContext(trainingConfig, {
+      onSuccess: (data) => {
+        console.log('✅ Training context created successfully:', data);
+        Alert.alert(
+          'Éxito',
+          'Configuración de entrenamiento guardada',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/atc-practice'),
+            },
+          ]
+        );
+      },
+      onError: (error: any) => {
+        console.error('❌ Error creating training context:', error);
+        Alert.alert(
+          'Error',
+          error?.response?.data?.message || 'No se pudo guardar la configuración'
+        );
+      },
+    });
   };
 
   return (
     <ResponsiveLayout>
       <SafeAreaView className="flex-1 bg-white">
-        <View style={{ flex: 1, padding: 20 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
           {/* Header */}
           <View style={{ marginBottom: 24 }}>
             <ThemedText
@@ -28,7 +117,7 @@ export default function FlightContextScreen() {
                 marginBottom: 8,
               }}
             >
-              Contexto de Vuelo
+              Configuración de Entrenamiento
             </ThemedText>
             <ThemedText
               style={{
@@ -37,38 +126,241 @@ export default function FlightContextScreen() {
                 opacity: 0.6,
               }}
             >
-              Proporciona información sobre tu vuelo
+              Practica Briefing previo al vuelo
             </ThemedText>
           </View>
 
-          {/* Context Input Area */}
-          <View style={{ flex: 1, marginBottom: 24 }}>
-            <TextInput
-              style={{
-                flex: 1,
-                backgroundColor: '#1a1a1a',
-                borderRadius: 16,
-                padding: 20,
-                fontSize: 16,
-                color: '#ffffff',
-                textAlignVertical: 'top',
-                borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                fontFamily: 'monospace',
-              }}
-              value={context}
-              onChangeText={setContext}
-              placeholder="Describe tu situación de vuelo:&#10;&#10;• ¿Dónde estás?&#10;• ¿Qué está pasando?&#10;• ¿A dónde vas?&#10;• Condiciones meteorológicas&#10;• Tipo de aeronave&#10;• Cualquier otra información relevante..."
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-              numberOfLines={10}
+          {/* Tabs */}
+          <View style={{ marginBottom: 20 }}>
+            <SegmentedButtons
+              value={activeTab}
+              onValueChange={setActiveTab}
+              buttons={[
+                {
+                  value: 'manual',
+                  label: 'Configuración Manual',
+                  style: activeTab === 'manual' ? styles.activeTab : styles.inactiveTab,
+                  labelStyle: activeTab === 'manual' ? styles.activeLabel : styles.inactiveLabel,
+                },
+                {
+                  value: 'voice',
+                  label: 'Por Voz',
+                  style: activeTab === 'voice' ? styles.activeTab : styles.inactiveTab,
+                  labelStyle: activeTab === 'voice' ? styles.activeLabel : styles.inactiveLabel,
+                },
+              ]}
+              style={styles.segmentedButtons}
             />
           </View>
+
+          {/* Manual Configuration Content */}
+          {activeTab === 'manual' && (
+            <>
+              {/* Route Section */}
+              <View style={{ marginBottom: 8 }}>
+                <ThemedText
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    marginBottom: 12,
+                  }}
+                >
+                  Ruta
+                </ThemedText>
+              </View>
+
+              {/* Departure Airport */}
+              <Dropdown
+                label="Salida (Departure)"
+                placeholder="Seleccione aeropuerto de salida"
+                options={AIRPORTS}
+                value={departure}
+                onSelect={setDeparture}
+                searchable={true}
+              />
+
+              {/* Arrival Airport */}
+              <Dropdown
+                label="Llegada (Arrival)"
+                placeholder="Seleccione aeropuerto de llegada"
+                options={AIRPORTS}
+                value={arrival}
+                onSelect={setArrival}
+                searchable={true}
+              />
+
+              {/* Route Display */}
+              {departure && arrival && (
+                <View style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: 12,
+                  borderRadius: 8,
+                  marginTop: 8,
+                  marginBottom: 16
+                }}>
+                  <ThemedText style={{ fontSize: 14, opacity: 0.6 }}>
+                    Ruta: {departure} → {arrival}
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* Meteorological Conditions Section */}
+              <View style={{ marginTop: 16, marginBottom: 8 }}>
+                <ThemedText
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    marginBottom: 12,
+                  }}
+                >
+                  Condiciones Meteorológicas
+                </ThemedText>
+              </View>
+
+              {/* Condition */}
+              <Dropdown
+                label="Condición"
+                placeholder="Seleccione condición"
+                options={CONDITIONS}
+                value={meteo.condition}
+                onSelect={(value) => setMeteo({ ...meteo, condition: value })}
+                searchable={false}
+              />
+
+              {/* Visibility */}
+              <Dropdown
+                label="Visibilidad"
+                placeholder="Seleccione visibilidad"
+                options={VISIBILITY}
+                value={meteo.vis}
+                onSelect={(value) => setMeteo({ ...meteo, vis: value })}
+                searchable={false}
+              />
+
+              {/* QNH */}
+              <Dropdown
+                label="QNH (hPa)"
+                placeholder="Seleccione QNH"
+                options={QNH_VALUES}
+                value={meteo.qnh}
+                onSelect={(value) => setMeteo({ ...meteo, qnh: value })}
+                searchable={true}
+              />
+
+              {/* Wind Section */}
+              <View style={{ marginTop: 8, marginBottom: 8 }}>
+                <ThemedText
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    marginBottom: 12,
+                  }}
+                >
+                  Viento (Dirección / Velocidad)
+                </ThemedText>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {/* Wind Direction */}
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    label="Dirección"
+                    placeholder="000°"
+                    options={WIND_DIRECTIONS}
+                    value={meteo.windDirection}
+                    onSelect={(value) => setMeteo({ ...meteo, windDirection: value })}
+                    searchable={true}
+                  />
+                </View>
+
+                {/* Wind Speed */}
+                <View style={{ flex: 1 }}>
+                  <Dropdown
+                    label="Velocidad"
+                    placeholder="0 nudos"
+                    options={WIND_SPEEDS}
+                    value={meteo.windSpeed}
+                    onSelect={(value) => setMeteo({ ...meteo, windSpeed: value })}
+                    searchable={true}
+                  />
+                </View>
+              </View>
+
+              {/* Wind Display */}
+              {meteo.windDirection && meteo.windSpeed && (
+                <View style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: 12,
+                  borderRadius: 8,
+                  marginTop: 8,
+                  marginBottom: 16
+                }}>
+                  <ThemedText style={{ fontSize: 14, opacity: 0.6 }}>
+                    Viento: {meteo.windDirection}/{meteo.windSpeed}
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* Objectives Section */}
+              <View style={{ marginTop: 16, marginBottom: 8 }}>
+                <ThemedText
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    marginBottom: 12,
+                  }}
+                >
+                  Objetivos de Práctica
+                </ThemedText>
+              </View>
+
+              {/* Objectives Multi-Select Dropdown */}
+              <MultiSelectDropdown
+                label="Objetivos"
+                placeholder="Seleccione uno o más objetivos"
+                options={OBJECTIVES}
+                values={objectives}
+                onSelect={setObjectives}
+                searchable={false}
+              />
+            </>
+          )}
+
+          {/* Voice Configuration Content */}
+          {activeTab === 'voice' && (
+            <View style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingVertical: 60,
+            }}>
+              <ThemedText
+                style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  marginBottom: 12,
+                  textAlign: 'center',
+                }}
+              >
+                Configuración por Voz
+              </ThemedText>
+              <ThemedText
+                style={{
+                  fontSize: 14,
+                  opacity: 0.6,
+                  textAlign: 'center',
+                  paddingHorizontal: 20,
+                }}
+              >
+                Presiona el botón para iniciar la configuración usando comandos de voz
+              </ThemedText>
+            </View>
+          )}
 
           {/* Start Button */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#000',
+              backgroundColor: isPending ? '#666' : '#000',
               paddingVertical: 18,
               borderRadius: 12,
               alignItems: 'center',
@@ -77,22 +369,47 @@ export default function FlightContextScreen() {
               shadowOpacity: 0.3,
               shadowRadius: 8,
               elevation: 8,
+              marginTop: 8,
+              marginBottom: 24,
             }}
             onPress={handleStart}
             activeOpacity={0.8}
+            disabled={isPending}
           >
-            <ThemedText
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: '#ffffff',
-              }}
-            >
-              Iniciar
-            </ThemedText>
+            {isPending ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <ThemedText
+                style={{
+                  fontSize: 18,
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                }}
+              >
+                Iniciar
+              </ThemedText>
+            )}
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </ResponsiveLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  segmentedButtons: {
+    backgroundColor: '#f5f5f5',
+  },
+  activeTab: {
+    backgroundColor: '#000',
+  },
+  inactiveTab: {
+    backgroundColor: 'transparent',
+  },
+  activeLabel: {
+    color: '#fff',
+  },
+  inactiveLabel: {
+    color: '#000',
+  },
+});

@@ -1,7 +1,7 @@
-import { sendAudioForAnalysis } from '@/app/services/apiClient';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { sendAudioForAnalysis } from '@/services/apiClient';
 import {
   RecordingPresets,
   setAudioModeAsync,
@@ -346,8 +346,8 @@ export default function AudioInteractionScreen() {
             backgroundColor: isTransmitting ? '#22C55E' : '#000', // green = live, blue = idle
           }}
           contentStyle={{
-            width: 96,
-            height: 96,
+            width: 85,
+            height: 85,
             justifyContent: 'center',
             alignItems: 'center',
             borderRadius: 9999,
