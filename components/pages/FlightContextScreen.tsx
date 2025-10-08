@@ -82,13 +82,21 @@ export default function FlightContextScreen() {
     createContext(trainingConfig, {
       onSuccess: (data) => {
         console.log('✅ Training context created successfully:', data);
+        console.log('📝 Session ID:', data.trainingSessionId);
+
         Alert.alert(
           'Éxito',
           'Configuración de entrenamiento guardada',
           [
             {
               text: 'OK',
-              onPress: () => router.push('/atc-practice'),
+              onPress: () => {
+                // Navigate with session ID as query param
+                router.push({
+                  pathname: '/atc-practice',
+                  params: { sessionId: data.trainingSessionId },
+                });
+              },
             },
           ]
         );

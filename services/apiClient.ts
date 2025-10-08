@@ -99,12 +99,17 @@ export const getUserById = async (userId: number | string) => {
 };
 
 // Audio interaction function
-export const sendAudioForAnalysis = async (audioUri: string) => {
+export const sendAudioForAnalysis = async (audioUri: string, sessionId: string) => {
   const formData = new FormData();
-  formData.append('audio', {
+
+  // Add session_id as form field
+  formData.append('session_id', sessionId);
+
+  // Add audio file - backend expects 'audio_file' field with MP3 content type
+  formData.append('audio_file', {
     uri: audioUri,
-    name: 'recording.m4a',
-    type: 'audio/m4a',
+    name: 'recording.mp3',
+    type: 'audio/mpeg',
   } as any);
 
   const response = await apiClient.post('/audio/analyze', formData, {
