@@ -1,22 +1,13 @@
+
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
-import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useGetMe } from '@/query_hooks/useGetMe';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 export default function UpdateProfileScreen() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  // TODO: Replace with actual user data from authentication/state management
-  const userData = {
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    email: 'juan.perez@example.com',
-    accountType: 'student' as const,
-    school: 'aensa',
-  };
+  const { data: currentUser, isLoading: isFetchingUser, error } = useGetMe();
 
   const handleProfileUpdate = async (data: any) => {
-    setIsLoading(true);
     try {
       // TODO: Implement actual API call to update user profile
       console.log('Updating profile with:', data);
@@ -25,19 +16,54 @@ export default function UpdateProfileScreen() {
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Error al actualizar el perfil');
-    } finally {
-      setIsLoading(false);
     }
   };
+
+
+  if (isFetchingUser) {
+    return (
+      <ResponsiveLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={{ marginTop: 10 }}>Cargando perfil...</Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
+
+
+  if (error) {
+    return (
+      <ResponsiveLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: 'red', textAlign: 'center' }}>
+            Error al cargar el perfil. Por favor intenta de nuevo.
+          </Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <ResponsiveLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ textAlign: 'center' }}>
+            No se encontró información del usuario.
+          </Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
 
   return (
     <ResponsiveLayout>
       <ScrollView style={{ flex: 1, backgroundColor: '#fff' }}>
         <View style={{ padding: 20 }}>
           <UserProfileForm
-            userData={userData}
+            userData={currentUser}
             onSubmit={handleProfileUpdate}
-            isLoading={isLoading}
+            isLoading={false}
           />
         </View>
       </ScrollView>
