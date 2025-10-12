@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HelperText, TextInput } from 'react-native-paper';
 
@@ -12,6 +12,9 @@ interface FormInputProps {
   keyboardType?: any;
   autoCapitalize?: any;
   placeholder?: string;
+  enableFocusControl?: boolean;
+  focusIcon?: string;
+  onFocusControlPress?: () => void;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -23,10 +26,14 @@ export const FormInput: React.FC<FormInputProps> = ({
   secureTextEntry = false,
   keyboardType = 'default',
   autoCapitalize = 'none',
-  placeholder
+  placeholder,
+  enableFocusControl = false,
+  focusIcon = 'pencil',
+  onFocusControlPress,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<any>(null);
 
   const displayLabel = required ? `${label} *` : label;
   const isSecure = secureTextEntry && !showPassword;
@@ -45,6 +52,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         theme={customTheme}
         label={displayLabel}
         value={value}
+        ref={inputRef}
         onChangeText={onChangeText}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -61,6 +69,21 @@ export const FormInput: React.FC<FormInputProps> = ({
         autoCapitalize={autoCapitalize}
         placeholder={placeholder}
         mode="outlined"
+        left={
+          enableFocusControl
+            ? (
+              <TextInput.Icon
+                icon={focusIcon}
+                onPress={() => {
+                  if (onFocusControlPress) {
+                    onFocusControlPress();
+                  }
+                  inputRef.current?.focus();
+                }}
+              />
+            )
+            : undefined
+        }
         right={
           secureTextEntry ? (
             <TextInput.Icon 

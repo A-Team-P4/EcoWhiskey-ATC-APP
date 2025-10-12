@@ -46,7 +46,7 @@ export default function RegisterScreen() {
   };
 
   const handleReturnToLogin = () => {
-    router.replace('/(tabs)/connect');
+    router.replace('/(tabs)/connect' as any);
   };
 
   return (
@@ -69,4 +69,5 @@ export default function RegisterScreen() {
     </ResponsiveLayout>
   );
 }
+
 

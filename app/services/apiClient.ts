@@ -2,7 +2,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { AuthResponse, LoginCredentials, RegistrationData } from '../interfaces/user';
+import {
+  AuthResponse,
+  ChangePasswordPayload,
+  LoginCredentials,
+  RegistrationData,
+  SchoolResponse,
+  SchoolsResponse,
+  SuccessResponse,
+  UpdateUserPayload,
+  UpdateUserSchoolPayload,
+  User,
+} from '../interfaces/user';
 
 // Get the correct base URL based on platform
 const getBaseURL = () => {
@@ -92,6 +103,47 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
   return response.data;
 };
 
+export const getCurrentUser = async (): Promise<User> => {
+  const response = await apiClient.get<User>('/users/me');
+  return response.data;
+};
+
+export const getUserById = async (userId: string): Promise<User> => {
+  const response = await apiClient.get<User>(`/users/${userId}`);
+  return response.data;
+};
+
+export const getSchools = async (): Promise<SchoolsResponse> => {
+  const response = await apiClient.get<SchoolsResponse>('/schools');
+  return response.data;
+};
+
+export const getSchoolById = async (schoolId: string): Promise<SchoolResponse> => {
+  const response = await apiClient.get<SchoolResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const updateUserProfile = async (userId: string, payload: UpdateUserPayload): Promise<User> => {
+  const response = await apiClient.put<User>(`/users/${userId}`, payload);
+  return response.data;
+};
+
+export const updateUserSchool = async (
+  userId: string,
+  payload: UpdateUserSchoolPayload
+): Promise<User> => {
+  const response = await apiClient.patch<User>(`/users/${userId}/school`, payload);
+  return response.data;
+};
+
+export const changeUserPassword = async (
+  userId: string,
+  payload: ChangePasswordPayload
+): Promise<SuccessResponse> => {
+  const response = await apiClient.post<SuccessResponse>(`/users/${userId}/password`, payload);
+  return response.data;
+};
+
 // Audio interaction function
 export const sendAudioForAnalysis = async (audioUri: string) => {
   const formData = new FormData();
@@ -112,3 +164,4 @@ export const sendAudioForAnalysis = async (audioUri: string) => {
 };
 
 export default apiClient;
+
