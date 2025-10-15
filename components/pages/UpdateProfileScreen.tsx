@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import {
   CURRENT_USER_QUERY_KEY,
   useChangeUserPassword,
@@ -13,6 +12,7 @@ import { Typography } from '@/components/atoms/Typography';
 import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
+import { useQueryClient } from '@tanstack/react-query';
 import { ScrollView } from 'react-native';
 
 type ProfileUpdateSubmission = {

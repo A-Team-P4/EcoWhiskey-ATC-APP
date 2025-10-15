@@ -1,4 +1,4 @@
-import { RegistrationData } from '@/app/interfaces/user';
+import { RegistrationData } from '@/interfaces/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';

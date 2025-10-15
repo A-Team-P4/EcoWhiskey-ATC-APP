@@ -14,8 +14,9 @@ import {
   UpdateUserSchoolPayload,
   User,
 } from '../interfaces/user';
+import { TrainingConfiguration } from '@/interfaces/training';
 
-// Get the correct base URL based on platform
+
 const getBaseURL = () => {
   if (__DEV__) {
     // Development mode
@@ -37,10 +38,10 @@ const getBaseURL = () => {
 
 const API_BASE_URL = getBaseURL();
 
-// Create Axios instance
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -69,13 +70,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     if (__DEV__) {
-      console.log(`✅ SUCCESS API: ${response.status} ${response.config.url}`);
+      console.log(` SUCCESS API: ${response.status} ${response.config.url}`);
     }
     return response;
   },
   (error) => {
     if (__DEV__) {
-      console.error(`❌ ERROR API:`, error.response?.data || error.message);
+      console.error(` ERROR API:`, error.response?.data || error.message);
       if (error.message === 'Network Error') {
         console.error(`🔌 Network Error - Check if backend is running at ${API_BASE_URL}`);
       }
@@ -141,27 +142,42 @@ export const changeUserPassword = async (
   payload: ChangePasswordPayload
 ): Promise<SuccessResponse> => {
   const response = await apiClient.post<SuccessResponse>(`/users/${userId}/password`, payload);
+// Get user by ID function
+export const getUserById = async (userId: number | string) => {
+  const response = await apiClient.get(`/users/${userId}`);
   return response.data;
 };
 
 // Audio interaction function
-export const sendAudioForAnalysis = async (audioUri: string) => {
+export const sendAudioForAnalysis = async (audioUri: string, sessionId: string) => {
   const formData = new FormData();
-  formData.append('audio', {
+
+  // Add session_id as form field
+  formData.append('session_id', sessionId);
+
+  // Add audio file - backend expects 'audio_file' field with MP3 content type
+  formData.append('audio_file', {
     uri: audioUri,
-    name: 'recording.m4a',
-    type: 'audio/m4a',
+    name: 'recording.mp3',
+    type: 'audio/mpeg',
   } as any);
 
   const response = await apiClient.post('/audio/analyze', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-    timeout: 30000, 
+    timeout: 30000,
   });
 
   return response.data;
 };
 
-export default apiClient;
+// Create training context
+export const createTrainingContext = async (config: TrainingConfiguration) => {
+  const response = await apiClient.post('/training_context', {
+    context: config
+  });
+  return response.data;
+};
 
+export default apiClient;

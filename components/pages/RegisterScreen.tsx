@@ -1,5 +1,5 @@
-import { useRegistration } from '@/app/hooks/useRegistration';
-import { RegistrationData } from '@/app/interfaces/user';
+import { RegistrationData } from '@/interfaces/user';
+import { useRegistration } from '@/query_hooks/useRegistration';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView } from 'react-native';
