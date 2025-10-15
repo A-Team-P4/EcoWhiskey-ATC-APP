@@ -13,10 +13,12 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../atoms/Icon';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 const MIN_FREQUENCY = 118.00;
 const MAX_FREQUENCY = 135.90;
@@ -36,13 +38,15 @@ export default function AudioInteractionScreen() {
   const [inputFrequency, setInputFrequency] = useState('118.00');
   const [recordedAudioUri, setRecordedAudioUri] = useState<string | null>(null);
 
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
+
   useEffect(() => {
     (async () => {
       try {
         // Request permissions using AudioModule (like in the docs)
         const status = await AudioModule.requestRecordingPermissionsAsync();
         if (!status.granted) {
-          Alert.alert('Permission Required', 'Microphone permission is required for ATC practice');
+          showSnackbar('Microphone permission is required for ATC practice', 'error');
           return;
         }
 
@@ -167,7 +171,7 @@ export default function AudioInteractionScreen() {
         });
         setFeedbackText('Recording shared! You can now save it to your device.');
       } else {
-        Alert.alert('Sharing Not Available', 'Cannot share files on this device.');
+        showSnackbar('Cannot share files on this device.', 'error');
       }
     } catch (err) {
       console.error('❌ Export failed:', err);
@@ -185,8 +189,8 @@ export default function AudioInteractionScreen() {
     try {
       setFeedbackText('Sending audio to ATC system...');
 
-      // Send audio to backend for analysis with session ID
-      const response = await sendAudioForAnalysis(audioUri, sessionId);
+      const formattedFrequency = frequency.toFixed(2); 
+      const response = await sendAudioForAnalysis(audioUri, sessionId, formattedFrequency);
 
       console.log('📥 Backend response:', response);
 
@@ -608,46 +612,20 @@ export default function AudioInteractionScreen() {
                   </ThemedText>
                 </TouchableOpacity>
 
-                 {/* Share/Export button */}
-                <TouchableOpacity
-                  onPress={exportRecording}
-                  style={{ alignItems: 'center', flex: 1 }}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 28,
-                      backgroundColor: '#9333EA',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Icon
-                      type="Entypo"
-                      name="share"
-                      color="#ffffff"
-                      size={24}
-                    />
-                  </View>
-                  <ThemedText
-                    style={{
-                      fontSize: 12,
-                      fontWeight: '600',
-                      color: '#000',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Compartir
-                  </ThemedText>
-                </TouchableOpacity>
+               
               </View>
             </View>
           </View>
         )}
       </View>
+
+      {/* Snackbar */}
+      <AppSnackbar
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={hideSnackbar}
+      />
       </SafeAreaView>
     </ResponsiveLayout>
   );

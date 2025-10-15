@@ -2,8 +2,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { AuthResponse, LoginCredentials, RegistrationData } from '../interfaces/user';
 import { TrainingConfiguration } from '../interfaces/training';
+import { AuthResponse, LoginCredentials, RegistrationData } from '../interfaces/user';
 
 const getBaseURL = () => {
   if (__DEV__) {
@@ -99,13 +99,16 @@ export const getUserById = async (userId: number | string) => {
 };
 
 // Audio interaction function
-export const sendAudioForAnalysis = async (audioUri: string, sessionId: string) => {
+export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, frequency: string) => {
+  console.log('Preparing to send audio for analysis:');
+  console.log('sessionId:', sessionId);
+  console.log('frequency:', frequency);
+  console.log('audio file name:', 'recording.mp3');
+  console.log('audio file URI:', audioUri);
+  
   const formData = new FormData();
-
-  // Add session_id as form field
   formData.append('session_id', sessionId);
-
-  // Add audio file - backend expects 'audio_file' field with MP3 content type
+  formData.append('frequency',frequency);
   formData.append('audio_file', {
     uri: audioUri,
     name: 'recording.mp3',

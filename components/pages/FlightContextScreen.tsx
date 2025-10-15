@@ -2,13 +2,15 @@ import { Dropdown } from '@/components/molecules/Dropdown';
 import { MultiSelectDropdown } from '@/components/molecules/MultiSelectDropdown';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
+import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
 import { AIRPORTS, CONDITIONS, OBJECTIVES, VISIBILITY } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
-import { SegmentedButtons, ActivityIndicator } from 'react-native-paper';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 
 // Generate QNH values from 980 to 1050
@@ -48,6 +50,9 @@ export default function FlightContextScreen() {
   // Objectives state - can be multiple selections
   const [objectives, setObjectives] = useState<string[]>([]);
 
+  // Snackbar hook
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
+
   // Training context mutation
   const { mutate: createContext, isPending } = useCreateTrainingContext();
 
@@ -62,7 +67,7 @@ export default function FlightContextScreen() {
 
     // Validate required fields
     if (!route) {
-      Alert.alert('Error', 'Por favor seleccione aeropuertos de salida y llegada');
+      showSnackbar('Por favor seleccione aeropuertos de salida y llegada', 'error');
       return;
     }
 
@@ -84,28 +89,21 @@ export default function FlightContextScreen() {
         console.log('✅ Training context created successfully:', data);
         console.log('📝 Session ID:', data.trainingSessionId);
 
-        Alert.alert(
-          'Éxito',
-          'Configuración de entrenamiento guardada',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Navigate with session ID as query param
-                router.push({
-                  pathname: '/atc-practice',
-                  params: { sessionId: data.trainingSessionId },
-                });
-              },
-            },
-          ]
-        );
+        showSnackbar('Configuración de entrenamiento guardada', 'success');
+
+        // Navigate after a brief delay to show the success message
+        setTimeout(() => {
+          router.push({
+            pathname: '/atc-practice',
+            params: { sessionId: data.trainingSessionId },
+          });
+        }, 1000);
       },
       onError: (error: any) => {
         console.error('❌ Error creating training context:', error);
-        Alert.alert(
-          'Error',
-          error?.response?.data?.message || 'No se pudo guardar la configuración'
+        showSnackbar(
+          error?.response?.data?.message || 'No se pudo guardar la configuración',
+          'error'
         );
       },
     });
@@ -139,7 +137,7 @@ export default function FlightContextScreen() {
           </View>
 
           {/* Tabs */}
-          <View style={{ marginBottom: 20 }}>
+          {/* <View style={{ marginBottom: 20 }}>
             <SegmentedButtons
               value={activeTab}
               onValueChange={setActiveTab}
@@ -159,10 +157,10 @@ export default function FlightContextScreen() {
               ]}
               style={styles.segmentedButtons}
             />
-          </View>
+          </View> */}
 
           {/* Manual Configuration Content */}
-          {activeTab === 'manual' && (
+          {/* {activeTab === 'manual' && ( */}
             <>
               {/* Route Section */}
               <View style={{ marginBottom: 8 }}>
@@ -332,38 +330,7 @@ export default function FlightContextScreen() {
                 searchable={false}
               />
             </>
-          )}
-
-          {/* Voice Configuration Content */}
-          {activeTab === 'voice' && (
-            <View style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingVertical: 60,
-            }}>
-              <ThemedText
-                style={{
-                  fontSize: 18,
-                  fontWeight: '600',
-                  marginBottom: 12,
-                  textAlign: 'center',
-                }}
-              >
-                Configuración por Voz
-              </ThemedText>
-              <ThemedText
-                style={{
-                  fontSize: 14,
-                  opacity: 0.6,
-                  textAlign: 'center',
-                  paddingHorizontal: 20,
-                }}
-              >
-                Presiona el botón para iniciar la configuración usando comandos de voz
-              </ThemedText>
-            </View>
-          )}
+      
 
           {/* Start Button */}
           <TouchableOpacity
@@ -399,25 +366,16 @@ export default function FlightContextScreen() {
             )}
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Snackbar for notifications */}
+        <AppSnackbar
+          visible={snackbar.visible}
+          message={snackbar.message}
+          type={snackbar.type}
+          onDismiss={hideSnackbar}
+        />
       </SafeAreaView>
     </ResponsiveLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  segmentedButtons: {
-    backgroundColor: '#f5f5f5',
-  },
-  activeTab: {
-    backgroundColor: '#000',
-  },
-  inactiveTab: {
-    backgroundColor: 'transparent',
-  },
-  activeLabel: {
-    color: '#fff',
-  },
-  inactiveLabel: {
-    color: '#000',
-  },
-});
