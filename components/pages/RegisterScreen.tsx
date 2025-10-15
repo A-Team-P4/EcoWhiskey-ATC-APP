@@ -2,16 +2,19 @@ import { RegistrationData } from '@/interfaces/user';
 import { useRegistration } from '@/query_hooks/useRegistration';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RegistrationForm } from '../organisms/RegistrationForm';
 import { WelcomeSection } from '../organisms/WelcomeSection';
 import ResponsiveLayout from '../templates/ResponsiveLayout';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 
 export default function RegisterScreen() {
   const router = useRouter();
   const registrationMutation = useRegistration();
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const handleRegistration = async (data: RegistrationData) => {
     return new Promise<void>((resolve, reject) => {
@@ -29,20 +32,14 @@ export default function RegisterScreen() {
   };
 
  const handleRegistrationSuccess = () => {
-  Alert.alert(
-    'Registro exitoso',
-    'Tu cuenta ha sido creada correctamente',
-    [
-      { 
-        text: 'OK', 
-        onPress: () => router.replace('/login') 
-      }
-    ]
-  );
+  showSnackbar('Tu cuenta ha sido creada correctamente', 'success');
+  setTimeout(() => {
+    router.replace('/login');
+  }, 1500);
 };
 
   const handleRegistrationError = (errorMessage: string) => {
-    Alert.alert('Error', errorMessage);
+    showSnackbar(errorMessage, 'error');
   };
 
   const handleReturnToLogin = () => {
@@ -64,6 +61,14 @@ export default function RegisterScreen() {
               isLoading={registrationMutation.isPending}
             />
           </ScrollView>
+
+          {/* Snackbar */}
+          <AppSnackbar
+            visible={snackbar.visible}
+            message={snackbar.message}
+            type={snackbar.type}
+            onDismiss={hideSnackbar}
+          />
         </SafeAreaView>
       {/* </PaperProvider> */}
     </ResponsiveLayout>
