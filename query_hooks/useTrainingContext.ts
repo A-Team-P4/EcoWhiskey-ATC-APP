@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { TrainingConfiguration, TrainingContextResponse } from '../interfaces/training';
-import { createTrainingContext } from '../services/apiClient';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { TrainingConfiguration, TrainingContextResponse, TrainingSession } from '../interfaces/training';
+import { createTrainingContext, getTrainingContextHistory } from '../services/apiClient';
 
 export const useCreateTrainingContext = () => {
   return useMutation<TrainingContextResponse, unknown, TrainingConfiguration>({
@@ -14,3 +14,13 @@ export const useCreateTrainingContext = () => {
     },
   });
 };
+
+export const TRAINING_HISTORY_QUERY_KEY = (userId: string) =>
+  ['training_context', 'history', userId] as const;
+
+export const useTrainingContextHistory = (userId?: string) =>
+  useQuery<TrainingSession[]>({
+    queryKey: userId ? TRAINING_HISTORY_QUERY_KEY(userId) : ['training_context', 'history'],
+    queryFn: () => getTrainingContextHistory(userId as string),
+    enabled: Boolean(userId),
+  });

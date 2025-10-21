@@ -23,9 +23,7 @@ export interface TrainingContextResponse {
 }
 
 export interface TrainingSession {
-  id?: string;
-  userId?: string;
-  configuration: TrainingConfiguration;
-  createdAt?: string;
-  status?: 'pending' | 'in_progress' | 'completed';
+  trainingSessionId: string;
+  context: TrainingConfiguration;
+  createdAt: string;
 }
