@@ -22,7 +22,7 @@ export default function UpdateProfileScreen() {
 
   if (isFetchingUser) {
     return (
-      <ResponsiveLayout>
+      <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#000" />
           <Text style={{ marginTop: 10 }}>Cargando perfil...</Text>
@@ -34,7 +34,7 @@ export default function UpdateProfileScreen() {
 
   if (error) {
     return (
-      <ResponsiveLayout>
+      <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <Text style={{ color: 'red', textAlign: 'center' }}>
             Error al cargar el perfil. Por favor intenta de nuevo.
@@ -46,7 +46,7 @@ export default function UpdateProfileScreen() {
 
   if (!currentUser) {
     return (
-      <ResponsiveLayout>
+      <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <Text style={{ textAlign: 'center' }}>
             No se encontró información del usuario.
@@ -57,7 +57,7 @@ export default function UpdateProfileScreen() {
   }
 
   return (
-    <ResponsiveLayout>
+    <ResponsiveLayout showTopNav={true}>
       <ScrollView style={{ flex: 1, backgroundColor: '#fff' }}>
         <View style={{ padding: 20 }}>
           <UserProfileForm

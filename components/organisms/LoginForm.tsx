@@ -1,7 +1,7 @@
 import { LoginCredentials } from '@/interfaces/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
@@ -20,6 +20,9 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = false, serverError }) => {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isWeb = width >= 768;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -57,13 +60,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
 
   return (
     <View style={styles.container}>
-      <Typography variant="h1">Bienvenido</Typography>
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/EcoWhiskey.png')}
+          style={[styles.logo, isWeb && styles.logoWeb]}
+          //resizeMode="contain"
+        />
+      </View>
+
+      <Spacer size={32} />
+
+      <Typography variant="h1" style={styles.title}>Bienvenido</Typography>
       <Spacer size={8} />
       <Typography variant="body" style={styles.subtitle}>
         Ingresa tus credenciales para continuar
       </Typography>
 
-      <Spacer size={16} />
+      <Spacer size={24} />
 
       <FormInput
         label="Correo electronico"
@@ -129,18 +143,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 24,
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    marginTop: 32,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  logo: {
+    width: 250,
+    height: 80,
+  },
+  logoWeb: {
+    width: 350,
+    height: 110,
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   subtitle: {
-    color: '#333333',
+    color: '#666666',
+    textAlign: 'center',
   },
   serverError: {
     color: '#ef4444',
@@ -150,10 +175,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
   },
   switchLink: {
-    color: '#000000',
+    color: '#2196F3',
     textDecorationLine: 'underline',
+    fontWeight: '600',
   },
 });
