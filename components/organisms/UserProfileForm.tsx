@@ -7,7 +7,7 @@ import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { Dropdown } from '../molecules/Dropdown';
 import { FormInput } from '../molecules/FormInput';
-import { School, User } from '@/app/interfaces/user';
+import { School, User } from '@/interfaces/user';
 
 const toPreviewSource = (value?: string | null) => {
   if (!value) return null;

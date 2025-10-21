@@ -5,8 +5,8 @@ import {
   useSchools,
   useUpdateUserProfile,
   useUpdateUserSchool,
-} from '@/app/hooks/useUserProfile';
-import { ChangePasswordPayload, UpdateUserPayload, User } from '@/app/interfaces/user';
+} from '@/query_hooks/useUserProfile';
+import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';

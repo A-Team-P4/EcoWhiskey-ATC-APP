@@ -19,6 +19,9 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'antenna.radiowaves.left.and.right': 'rss-feed',
+  airplane: 'airplanemode-active',
+  'person.fill': 'person',
+  'clock.fill': 'history',
 } as IconMapping;
 
 /**

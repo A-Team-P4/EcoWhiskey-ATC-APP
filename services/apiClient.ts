@@ -1,4 +1,5 @@
 // services/api.ts
+import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
@@ -14,7 +15,6 @@ import {
   UpdateUserSchoolPayload,
   User,
 } from '../interfaces/user';
-import { TrainingConfiguration } from '@/interfaces/training';
 
 
 const getBaseURL = () => {
@@ -142,11 +142,10 @@ export const changeUserPassword = async (
   payload: ChangePasswordPayload
 ): Promise<SuccessResponse> => {
   const response = await apiClient.post<SuccessResponse>(`/users/${userId}/password`, payload);
-// Get user by ID function
-export const getUserById = async (userId: number | string) => {
-  const response = await apiClient.get(`/users/${userId}`);
   return response.data;
 };
+
+
 
 // Audio interaction function
 export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, frequency: string) => {
@@ -180,6 +179,11 @@ export const createTrainingContext = async (config: TrainingConfiguration) => {
   const response = await apiClient.post('/training_context', {
     context: config
   });
+  return response.data;
+};
+
+export const getTrainingContextHistory = async (userId: string): Promise<TrainingSession[]> => {
+  const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
   return response.data;
 };
 

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { AuthResponse, LoginCredentials } from '../interfaces/user';
-import { loginUser } from '../services/apiClient';
-import { CURRENT_USER_QUERY_KEY } from './useUserProfile';
+import { AuthResponse, LoginCredentials } from '@/interfaces/user';
+import { loginUser } from '@/services/apiClient';
+import { CURRENT_USER_QUERY_KEY } from '@/query_hooks/useUserProfile';
 
 const AUTH_TOKEN_STORAGE_KEY = '@auth_token';
 const AUTH_USER_STORAGE_KEY = '@auth_user';
