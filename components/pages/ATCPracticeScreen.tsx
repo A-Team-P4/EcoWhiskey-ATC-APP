@@ -1,5 +1,7 @@
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { sendAudioForAnalysis } from '@/services/apiClient';
 import {
   AudioModule,
@@ -15,10 +17,7 @@ import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import { Modal, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../atoms/Icon';
-import { AppSnackbar } from '@/components/molecules/AppSnackbar';
-import { useSnackbar } from '@/hooks/useSnackbar';
 
 const MIN_FREQUENCY = 118.00;
 const MAX_FREQUENCY = 135.90;
@@ -205,7 +204,7 @@ export default function AudioInteractionScreen() {
         await audioPlayer.replace({ uri: response.audio_url });
         await audioPlayer.play();
 
-        setFeedbackText('ATC response complete. Press PTT to record again.');
+        setFeedbackText(response.feedback);
       } else {
         setFeedbackText('Analysis complete. Press PTT to record again.');
       }
@@ -254,9 +253,7 @@ export default function AudioInteractionScreen() {
 
   return (
 
-    <ResponsiveLayout>
-      <SafeAreaView className="flex-1 bg-white">
-
+    <ResponsiveLayout showTopNav={true} >
       {/* Session ID Display */}
       {sessionId && (
         <View className="px-5 py-2 bg-green-50 border-b border-green-200">
@@ -626,7 +623,6 @@ export default function AudioInteractionScreen() {
         type={snackbar.type}
         onDismiss={hideSnackbar}
       />
-      </SafeAreaView>
     </ResponsiveLayout>
   );
 }

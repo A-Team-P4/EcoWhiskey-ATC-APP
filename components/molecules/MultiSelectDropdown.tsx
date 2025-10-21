@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Divider, HelperText, Surface, TextInput, Checkbox } from 'react-native-paper';
+import { Checkbox, Divider, HelperText, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
 import { Typography } from '../atoms/Typography';
 
@@ -84,7 +84,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       <Checkbox
         status={values.includes(item.value) ? 'checked' : 'unchecked'}
         onPress={() => toggleSelection(item.value)}
-        color="#000"
+        color="#2196F3"
       />
       <Typography variant="body" style={styles.optionText}>
         {item.label}
@@ -94,9 +94,9 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
   const customTheme = {
     colors: {
-      onSurface: '#000000',
-      onSurfaceVariant: '#000000',
-      primary: '#000000',
+      onSurface: '#000000', // Label color when not focused
+      onSurfaceVariant: '#000000', // Label color when not focused
+      primary: '#2196F3', // Label and border color when focused
     },
   };
 
@@ -122,7 +122,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             <TextInput.Icon
               icon={isVisible ? "chevron-up" : "chevron-down"}
               onPress={openDropdown}
-              color="#000"
+              color="#2196F3"
             />
           }
         />
@@ -234,8 +234,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   inputOutlineFocused: {
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: '#2196F3',
+    borderWidth: 2,
   },
   inputOutlineError: {
     borderColor: '#FF3B30',
