@@ -97,7 +97,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         {item.label}
       </Typography>
       {item.value === value && (
-        <Icon name="checkmark-circle" size={20} color="#000" />
+        <Icon name="checkmark-circle" size={20} color="#2196F3" />
       )}
     </TouchableOpacity>
   );
@@ -105,8 +105,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const customTheme = {
     colors: {
       onSurface: '#000000', // Label color when not focused
-      onSurfaceVariant: '#000000', // Label color when focused
-      primary: '#000000', // Label color when focused (primary color)
+      onSurfaceVariant: '#000000', // Label color when not focused
+      primary: '#2196F3', // Label and border color when focused
     },
   };
 
@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
     // borderColor: '#E5E5EA', // Uncomment if you want default border color
   },
   inputOutlineFocused: {
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: '#2196F3',
+    borderWidth: 2,
   },
   inputOutlineError: {
     borderColor: '#FF3B30',

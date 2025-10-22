@@ -1,3 +1,9 @@
+import { Spacer } from '@/components/atoms/Spacer';
+import { Typography } from '@/components/atoms/Typography';
+import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
+import { UserProfileForm } from '@/components/organisms/UserProfileForm';
+import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
+import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
 import {
   CURRENT_USER_QUERY_KEY,
   useChangeUserPassword,
@@ -6,12 +12,6 @@ import {
   useUpdateUserProfile,
   useUpdateUserSchool,
 } from '@/query_hooks/useUserProfile';
-import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
-import { Spacer } from '@/components/atoms/Spacer';
-import { Typography } from '@/components/atoms/Typography';
-import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
-import { UserProfileForm } from '@/components/organisms/UserProfileForm';
-import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { useQueryClient } from '@tanstack/react-query';
 import { ScrollView } from 'react-native';
 
@@ -132,8 +132,44 @@ export default function UpdateProfileScreen() {
     }
   };
 
+  if (isFetchingUser) {
+    return (
+      <ResponsiveLayout showTopNav={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text style={{ marginTop: 10 }}>Cargando perfil...</Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
+
+
+  if (error) {
+    return (
+      <ResponsiveLayout showTopNav={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: 'red', textAlign: 'center' }}>
+            Error al cargar el perfil. Por favor intenta de nuevo.
+          </Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <ResponsiveLayout showTopNav={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ textAlign: 'center' }}>
+            No se encontró información del usuario.
+          </Text>
+        </View>
+      </ResponsiveLayout>
+    );
+  }
+
   return (
-    <ResponsiveLayout>
+    <ResponsiveLayout showTopNav={true}>
       <ScrollView
         style={{ flex: 1, backgroundColor: '#fff' }}
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}

@@ -8,6 +8,7 @@ import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-na
 import 'react-native-reanimated';
 import '../global.css';
 import { queryClient } from '../lib/queryClient';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -22,12 +23,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={paperTheme}>
         <QueryClientProvider client={queryClient}>
-          <Stack>
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="atc-practice" options={{ headerShown: false,animation:"fade" }} />
-          </Stack>
+          <ProtectedRoute>
+            <Stack>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="register" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
+            </Stack>
+          </ProtectedRoute>
           <StatusBar style="auto" />
         </QueryClientProvider>
       </PaperProvider>
