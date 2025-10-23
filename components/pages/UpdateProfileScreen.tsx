@@ -1,3 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
@@ -12,8 +15,6 @@ import {
   useUpdateUserProfile,
   useUpdateUserSchool,
 } from '@/query_hooks/useUserProfile';
-import { useQueryClient } from '@tanstack/react-query';
-import { ScrollView } from 'react-native';
 
 type ProfileUpdateSubmission = {
   firstName?: string;
@@ -28,10 +29,16 @@ type PasswordFormSubmission = {
   confirmPassword: string;
 };
 
-export default function UpdateProfileScreen() {
+function UpdateProfileScreen() {
   const queryClient = useQueryClient();
 
-  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  const {
+    data: currentUser,
+    isLoading: isUserLoading,
+    isFetching: isUserFetching,
+    isError: isUserError,
+    error: userError,
+  } = useCurrentUser();
   const { data: schoolsResponse = [], isLoading: isSchoolsLoading } = useSchools();
 
   const updateUserProfileMutation = useUpdateUserProfile();
@@ -43,17 +50,18 @@ export default function UpdateProfileScreen() {
   const isProfileLoading = profileMutationPending || isUserLoading;
 
   const resolvedUser =
-    currentUser ??
-    (queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null);
+    currentUser ?? queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null;
 
   const isPasswordLoading = changeUserPasswordMutation.isPending;
+  const shouldShowLoading = (isUserLoading || isUserFetching) && !resolvedUser;
+  const schools = Array.isArray(schoolsResponse) ? schoolsResponse : [];
 
-  const handleProfileUpdate = async (data: ProfileUpdateSubmission) => {
+  const handleProfileUpdate = async (data: ProfileUpdateSubmission): Promise<void> => {
     const latestUser =
       queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? currentUser;
 
     if (!latestUser) {
-      alert('No se pudo identificar al usuario autenticado.');
+      Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
       return;
     }
 
@@ -90,25 +98,25 @@ export default function UpdateProfileScreen() {
     }
 
     if (updatePromises.length === 0) {
-      alert('No hay cambios para guardar');
+      Alert.alert('Sin cambios', 'No hay cambios para guardar.');
       return;
     }
 
     try {
       await Promise.all(updatePromises);
-      alert('Perfil actualizado exitosamente');
+      Alert.alert('Perfil actualizado', 'Perfil actualizado exitosamente.');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Error al actualizar el perfil');
+      Alert.alert('Error', 'Error al actualizar el perfil.');
     }
   };
 
-  const handlePasswordUpdate = async (values: PasswordFormSubmission) => {
+  const handlePasswordUpdate = async (values: PasswordFormSubmission): Promise<void> => {
     const latestUser =
       queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? currentUser;
 
     if (!latestUser) {
-      alert('No se pudo identificar al usuario autenticado.');
+      Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
       throw new Error('USER_NOT_AVAILABLE');
     }
 
@@ -123,46 +131,52 @@ export default function UpdateProfileScreen() {
         payload,
       });
       const successMessage =
-        response?.message ?? 'Contraseña actualizada correctamente';
-      alert(successMessage);
+        response?.message ?? 'Contrasena actualizada correctamente.';
+      Alert.alert('Contrasena actualizada', successMessage);
     } catch (error) {
       console.error('Error changing password:', error);
-      alert('No se pudo cambiar la contraseña. Intenta nuevamente.');
-      throw error;
+      Alert.alert('Error', 'No se pudo cambiar la contrasena. Intenta nuevamente.');
+      throw (error instanceof Error ? error : new Error('CHANGE_PASSWORD_FAILED'));
     }
   };
 
-  if (isFetchingUser) {
+  if (shouldShowLoading) {
     return (
       <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#000" />
-          <Text style={{ marginTop: 10 }}>Cargando perfil...</Text>
+          <Typography variant="body" style={{ marginTop: 10 }}>
+            Cargando perfil...
+          </Typography>
         </View>
       </ResponsiveLayout>
     );
   }
 
+  if (isUserError && !resolvedUser) {
+    const message =
+      userError instanceof Error
+        ? userError.message
+        : 'Error al cargar el perfil. Por favor intenta de nuevo.';
 
-  if (error) {
     return (
       <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ color: 'red', textAlign: 'center' }}>
-            Error al cargar el perfil. Por favor intenta de nuevo.
-          </Text>
+          <Typography variant="body" style={{ color: 'red', textAlign: 'center' }}>
+            {message}
+          </Typography>
         </View>
       </ResponsiveLayout>
     );
   }
 
-  if (!currentUser) {
+  if (!resolvedUser) {
     return (
       <ResponsiveLayout showTopNav={true}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ textAlign: 'center' }}>
-            No se encontró información del usuario.
-          </Text>
+          <Typography variant="body" style={{ textAlign: 'center' }}>
+            No se encontro informacion del usuario.
+          </Typography>
         </View>
       </ResponsiveLayout>
     );
@@ -174,42 +188,23 @@ export default function UpdateProfileScreen() {
         style={{ flex: 1, backgroundColor: '#fff' }}
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
       >
-        {resolvedUser ? (
-          <>
-            <UserProfileForm
-              userData={resolvedUser}
-              schools={schoolsResponse}
-              onSubmit={handleProfileUpdate}
-              isLoading={isProfileLoading}
-              isSchoolLoading={isSchoolsLoading}
-            />
+        <UserProfileForm
+          userData={resolvedUser}
+          schools={schools}
+          onSubmit={handleProfileUpdate}
+          isLoading={isProfileLoading}
+          isSchoolLoading={isSchoolsLoading}
+        />
 
-            <Spacer size={32} />
+        <Spacer size={32} />
 
-            <ChangePasswordForm
-              onSubmit={handlePasswordUpdate}
-              isLoading={isPasswordLoading}
-            />
-          </>
-        ) : (
-          <Typography variant="body" style={{ textAlign: 'center', marginTop: 24 }}>
-            {isUserLoading
-              ? 'Cargando información del usuario...'
-              : 'No se pudo cargar la información del usuario.'}
-          </Typography>
-        )}
+        <ChangePasswordForm
+          onSubmit={handlePasswordUpdate}
+          isLoading={isPasswordLoading}
+        />
       </ScrollView>
     </ResponsiveLayout>
   );
 }
 
-
-
-
-
-
-
-
-
-
-
+export default UpdateProfileScreen;

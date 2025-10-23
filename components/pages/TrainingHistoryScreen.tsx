@@ -161,7 +161,7 @@ export default function TrainingHistoryScreen() {
   const isBusy = isLoading || isUserLoading;
 
   return (
-    <ResponsiveLayout>
+    <ResponsiveLayout showTopNav={true}>
       <ScrollView
         style={{ flex: 1, backgroundColor: '#fff' }}
         contentContainerStyle={styles.container}

@@ -1,9 +1,10 @@
 ﻿import { Tabs } from "expo-router";
 import React from "react";
-import { View, StyleSheet, Platform, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 
-import { HapticTab } from "@/components/haptic-tab";
 import { Icon } from "@/components/atoms/Icon";
+import { HapticTab } from "@/components/haptic-tab";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function TabLayout() {
   const { width } = useWindowDimensions();
