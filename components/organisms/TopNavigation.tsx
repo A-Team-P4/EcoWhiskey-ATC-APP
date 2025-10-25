@@ -1,44 +1,57 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState } from 'react';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { Avatar } from 'react-native-paper';
+
 import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { useGetMe } from '@/query_hooks/useGetMe';
 import { usePathname, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Image, TouchableOpacity, View, useWindowDimensions, StyleSheet } from 'react-native';
-import { Avatar } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const TopNavigation: React.FC = () => {
   const { data: user, isLoading } = useGetMe();
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
+
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const isMobile = width < 768;
-
-  // Determine which tab is active
   const isATCActive = pathname.includes('ATCTrainingTab');
   const isProfileActive = pathname.includes('UserProfileTab');
 
-  // Generate initials from user's first and last name
   const getInitials = () => {
     if (!user?.firstName || !user?.lastName) return '?';
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
   };
 
-  const handleSettingsPress = () => {
-    setShowSettingsMenu(!showSettingsMenu);
+  const closeMenus = () => {
+    setShowSettingsMenu(false);
+    setShowAccountMenu(false);
+  };
+
+  const toggleSettingsMenu = () => {
+    setShowAccountMenu(false);
+    setShowSettingsMenu((prev) => !prev);
+  };
+
+  const toggleAccountMenu = () => {
+    setShowSettingsMenu(false);
+    setShowAccountMenu((prev) => !prev);
   };
 
   const handleLogout = async () => {
     try {
-      // Clear auth token from AsyncStorage
       await AsyncStorage.removeItem('@auth_token');
-
-      // Close menu
-      setShowSettingsMenu(false);
-
-      // Navigate to login screen
+      closeMenus();
       router.replace('/login');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -50,148 +63,152 @@ export const TopNavigation: React.FC = () => {
   };
 
   const handleProfilePress = () => {
+    setShowAccountMenu(false);
     router.push('/(tabs)/UserProfileTab');
   };
 
+  const handleHistoryPress = () => {
+    setShowAccountMenu(false);
+    router.push('/(tabs)/TrainingHistoryTab');
+  };
+
   return (
-    <View style={{ backgroundColor: '#fff' }}>
-      {/* Top row: App name + icons */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: 8,
-          borderBottomWidth: 1,
-          borderBottomColor: '#e0e0e0',
-        }}
-      >
-        {/* App Logo */}
+    <View style={styles.root}>
+      {(showSettingsMenu || showAccountMenu) && (
+        <Pressable style={styles.menuBackdrop} onPress={closeMenus} />
+      )}
+
+      <View style={styles.topRow}>
         <Image
           source={require('@/assets/images/EcoWhiskey.png')}
           style={{
             height: isMobile ? 50 : 60,
             width: isMobile ? 180 : 240,
           }}
-          //resizeMode="contain"
+          resizeMode="contain"
         />
 
-        {/* Icons Row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          {/* Settings Icon */}
-          <View style={{ position: 'relative' }}>
-            <TouchableOpacity onPress={handleSettingsPress} activeOpacity={0.7}>
-              <Icon type="MaterialIcons" name="settings" size={24} color="#666" />
+        <View style={styles.iconRow}>
+          <View style={styles.iconWrapper}>
+            <TouchableOpacity onPress={toggleSettingsMenu} activeOpacity={0.7}>
+              <Icon type='MaterialIcons' name='settings' size={24} color='#666' />
             </TouchableOpacity>
 
-            {/* Settings Dropdown Menu */}
             {showSettingsMenu && (
-              <>
+              <View style={styles.dropdownMenu}>
                 <TouchableOpacity
-                  style={styles.menuOverlay}
-                  onPress={() => setShowSettingsMenu(false)}
-                  activeOpacity={1}
-                />
-                <View style={styles.settingsMenu}>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={handleLogout}
-                    activeOpacity={0.7}
-                  >
-                    <Icon type="MaterialIcons" name="logout" size={20} color="#666" />
-                    <ThemedText style={styles.menuItemText}>
-                      Cerrar Sesión
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
-              </>
+                  style={styles.menuItem}
+                  onPress={handleLogout}
+                  activeOpacity={0.7}
+                >
+                  <Icon type='MaterialIcons' name='logout' size={20} color='#666' />
+                  <ThemedText style={styles.menuItemText}>Cerrar Sesion</ThemedText>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
-          {/* Avatar */}
-          <TouchableOpacity onPress={handleSettingsPress} activeOpacity={0.7}>
-            {isLoading ? (
-              <Avatar.Icon size={40} icon="account" style={{ backgroundColor: '#e0e0e0' }} />
-            ) : (
-              <Avatar.Text
-                size={40}
-                label={getInitials()}
-                style={{ backgroundColor: '#000' }}
-                labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-              />
+          <View style={styles.iconWrapper}>
+            <TouchableOpacity onPress={toggleAccountMenu} activeOpacity={0.7}>
+              {isLoading ? (
+                <Avatar.Icon size={40} icon='account' style={{ backgroundColor: '#e0e0e0' }} />
+              ) : (
+                <Avatar.Text
+                  size={40}
+                  label={getInitials()}
+                  style={{ backgroundColor: '#000' }}
+                  labelStyle={{ color: '#fff', fontWeight: 'bold' }}
+                />
+              )}
+            </TouchableOpacity>
+
+            {showAccountMenu && (
+              <View style={styles.dropdownMenu}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleProfilePress}
+                  activeOpacity={0.7}
+                >
+                  <Icon type='MaterialIcons' name='person' size={20} color='#666' />
+                  <ThemedText style={styles.menuItemText}>Perfil</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleHistoryPress}
+                  activeOpacity={0.7}
+                >
+                  <Icon type='MaterialIcons' name='history' size={20} color='#666' />
+                  <ThemedText style={styles.menuItemText}>Historial</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleLogout}
+                  activeOpacity={0.7}
+                >
+                  <Icon type='MaterialIcons' name='logout' size={20} color='#666' />
+                  <ThemedText style={styles.menuItemText}>Cerrar Sesion</ThemedText>
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Bottom row: Navigation tabs (web only) */}
       {!isMobile && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 20,
-            paddingVertical: 8,
-          }}
-        >
-          {/* Navigation Tabs */}
-          <View style={{ flexDirection: 'row', gap: 24, alignItems: 'center' }}>
-            {/* ATC Practice Tab */}
+        <View style={styles.webTabsRow}>
+          <View style={styles.webTabs}>
             <TouchableOpacity
               onPress={handleATCPress}
               activeOpacity={0.7}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                borderBottomWidth: 3,
-                borderBottomColor: isATCActive ? '#3d93d8' : 'transparent',
-              }}
+              style={[
+                styles.webTabButton,
+                { borderBottomColor: isATCActive ? '#3d93d8' : 'transparent' },
+              ]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.webTabContent}>
                 <Icon
-                  type="FontAwesome5"
-                  name="plane-departure"
+                  type='FontAwesome5'
+                  name='plane-departure'
                   size={20}
                   color={isATCActive ? '#2196F3' : '#666'}
                 />
                 <ThemedText
-                  style={{
-                    fontSize: 16,
-                    fontWeight: isATCActive ? '600' : '400',
-                    color: isATCActive ? '#2196F3' : '#666',
-                  }}
+                  style={[
+                    styles.webTabLabel,
+                    {
+                      fontWeight: isATCActive ? '600' : '400',
+                      color: isATCActive ? '#2196F3' : '#666',
+                    },
+                  ]}
                 >
                   ATC Practice
                 </ThemedText>
               </View>
             </TouchableOpacity>
 
-            {/* Score Tab */}
             <TouchableOpacity
               onPress={handleProfilePress}
               activeOpacity={0.7}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                borderBottomWidth: 3,
-                borderBottomColor: isProfileActive ? '#2196F3' : 'transparent',
-              }}
+              style={[
+                styles.webTabButton,
+                { borderBottomColor: isProfileActive ? '#2196F3' : 'transparent' },
+              ]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.webTabContent}>
                 <Icon
-                  type="MaterialIcons"
-                  name="scoreboard"
+                  type='MaterialIcons'
+                  name='scoreboard'
                   size={20}
                   color={isProfileActive ? '#2196F3' : '#666'}
                 />
                 <ThemedText
-                  style={{
-                    fontSize: 16,
-                    fontWeight: isProfileActive ? '600' : '400',
-                    color: isProfileActive ? '#2196F3' : '#666',
-                  }}
+                  style={[
+                    styles.webTabLabel,
+                    {
+                      fontWeight: isProfileActive ? '600' : '400',
+                      color: isProfileActive ? '#2196F3' : '#666',
+                    },
+                  ]}
                 >
                   Score
                 </ThemedText>
@@ -205,39 +222,85 @@ export const TopNavigation: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  menuOverlay: {
-    position: 'fixed' as any,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 999,
+  root: {
+    backgroundColor: '#fff',
+    position: 'relative',
+    zIndex: 10,
   },
-  settingsMenu: {
+  menuBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 5,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    zIndex: 10,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 16,
+  },
+  iconWrapper: {
+    position: 'relative',
+    zIndex: 20,
+  },
+  dropdownMenu: {
     position: 'absolute',
-    top: 35,
+    top: 46,
     right: 0,
     backgroundColor: '#fff',
     borderRadius: 8,
     minWidth: 200,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 5,
-    zIndex: 1000,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    elevation: 12,
+    zIndex: 30,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    gap: 12,
+    columnGap: 12,
   },
   menuItemText: {
     fontSize: 16,
     color: '#333',
+  },
+  webTabsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    zIndex: 1,
+  },
+  webTabs: {
+    flexDirection: 'row',
+    columnGap: 24,
+    alignItems: 'center',
+  },
+  webTabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 3,
+  },
+  webTabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 8,
+  },
+  webTabLabel: {
+    fontSize: 16,
   },
 });

@@ -42,6 +42,9 @@ export default function RegisterScreen() {
     showSnackbar(errorMessage, 'error');
   };
 
+  const handleReturnToLogin = () => {
+    router.replace('/(tabs)/connect' as any);
+  };
 
   return (
     <ResponsiveLayout>
@@ -71,4 +74,5 @@ export default function RegisterScreen() {
     </ResponsiveLayout>
   );
 }
+
 

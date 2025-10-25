@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Divider, HelperText, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
@@ -18,6 +18,9 @@ interface DropdownProps {
   required?: boolean;
   placeholder?: string;
   searchable?: boolean;
+  enableFocusControl?: boolean;
+  focusIcon?: string;
+  disabled?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -28,12 +31,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
   error,
   required = false,
   placeholder = "Selecciona una opción",
-  searchable = true
+  searchable = true,
+  enableFocusControl = false,
+  focusIcon = 'pencil',
+  disabled = false
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
+
+  useEffect(() => {
+    setFilteredOptions(options);
+  }, [options]);
 
   const displayLabel = required ? `${label} *` : label;
   const selectedOption = options.find(option => option.value === value);
@@ -60,6 +70,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 
   const openDropdown = () => {
+    if (disabled) {
+      return;
+    }
     setIsVisible(true);
     setIsFocused(true);
     setFilteredOptions(options);
@@ -97,14 +110,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
     },
   };
 
+  const iconColor = disabled ? '#C7C7CC' : '#000';
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={openDropdown}>
+      <TouchableOpacity onPress={openDropdown} disabled={disabled}>
         <TextInput
           theme={customTheme}
           label={displayLabel}
           value={displayValue}
-          style={[styles.input, isFocused && styles.inputFocused]}
+          style={[
+            styles.input,
+            isFocused && styles.inputFocused,
+            disabled && styles.inputDisabled
+          ]}
           contentStyle={styles.inputContent}
           outlineStyle={[
             styles.inputOutline,
@@ -113,13 +132,25 @@ export const Dropdown: React.FC<DropdownProps> = ({
           ]}
           error={!!error}
           mode="outlined"
+          left={
+            enableFocusControl
+              ? (
+                <TextInput.Icon
+                  icon={focusIcon}
+                  onPress={disabled ? undefined : openDropdown}
+                  forceTextInputFocus={false}
+                  color={iconColor}
+                />
+              )
+              : undefined
+          }
           editable={false}
           placeholder={placeholder}
           right={
             <TextInput.Icon 
               icon={isVisible ? "chevron-up" : "chevron-down"} 
-              onPress={openDropdown}
-              color="#000"
+              onPress={disabled ? undefined : openDropdown}
+              color={iconColor}
             />
           }
         />
@@ -201,6 +232,9 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     // backgroundColor: '#FFFFFF', // Uncomment if you want focused background
+  },
+  inputDisabled: {
+    opacity: 0.6,
   },
   inputContent: {
     color: '#1C1C1E',

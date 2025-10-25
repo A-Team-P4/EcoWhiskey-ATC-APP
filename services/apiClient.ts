@@ -1,9 +1,21 @@
 // services/api.ts
+import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { TrainingConfiguration } from '../interfaces/training';
-import { AuthResponse, LoginCredentials, RegistrationData } from '../interfaces/user';
+import {
+  AuthResponse,
+  ChangePasswordPayload,
+  LoginCredentials,
+  RegistrationData,
+  SchoolResponse,
+  SchoolsResponse,
+  SuccessResponse,
+  UpdateUserPayload,
+  UpdateUserSchoolPayload,
+  User,
+} from '../interfaces/user';
+
 
 const getBaseURL = () => {
   if (__DEV__) {
@@ -92,11 +104,48 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
   return response.data;
 };
 
-// Get user by ID function
-export const getUserById = async (userId: number | string) => {
-  const response = await apiClient.get(`/users/${userId}`);
+export const getCurrentUser = async (): Promise<User> => {
+  const response = await apiClient.get<User>('/users/me');
   return response.data;
 };
+
+export const getUserById = async (userId: string): Promise<User> => {
+  const response = await apiClient.get<User>(`/users/${userId}`);
+  return response.data;
+};
+
+export const getSchools = async (): Promise<SchoolsResponse> => {
+  const response = await apiClient.get<SchoolsResponse>('/schools');
+  return response.data;
+};
+
+export const getSchoolById = async (schoolId: string): Promise<SchoolResponse> => {
+  const response = await apiClient.get<SchoolResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const updateUserProfile = async (userId: string, payload: UpdateUserPayload): Promise<User> => {
+  const response = await apiClient.put<User>(`/users/${userId}`, payload);
+  return response.data;
+};
+
+export const updateUserSchool = async (
+  userId: string,
+  payload: UpdateUserSchoolPayload
+): Promise<User> => {
+  const response = await apiClient.patch<User>(`/users/${userId}/school`, payload);
+  return response.data;
+};
+
+export const changeUserPassword = async (
+  userId: string,
+  payload: ChangePasswordPayload
+): Promise<SuccessResponse> => {
+  const response = await apiClient.post<SuccessResponse>(`/users/${userId}/password`, payload);
+  return response.data;
+};
+
+
 
 // Audio interaction function
 export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, frequency: string) => {
@@ -130,6 +179,11 @@ export const createTrainingContext = async (config: TrainingConfiguration) => {
   const response = await apiClient.post('/training_context', {
     context: config
   });
+  return response.data;
+};
+
+export const getTrainingContextHistory = async (userId: string): Promise<TrainingSession[]> => {
+  const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
   return response.data;
 };
 

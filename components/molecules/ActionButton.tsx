@@ -36,7 +36,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     }
   };
 
- 
+
   const customTheme = {
     colors: {
       primary: '#000000', 
@@ -47,13 +47,24 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     },
   };
 
+  const getLabelColor = () => {
+    switch (variant) {
+      case 'outline':
+        return '#000000';
+      case 'secondary':
+        return '#FFFFFF';
+      default:
+        return '#FFFFFF';
+    }
+  };
+
   return (
     <Button
       mode={getButtonMode()}
       onPress={onPress}
       className={getButtonClassName()}
       contentStyle={{ paddingVertical: 8 }}
-      labelStyle={{ fontSize: 17, fontWeight: '600', color: '#FFFFFF' }}
+      labelStyle={{ fontSize: 17, fontWeight: '600', color: getLabelColor() }}
       loading={loading}
       disabled={disabled || loading}
       icon={icon}
