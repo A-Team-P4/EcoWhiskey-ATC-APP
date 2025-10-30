@@ -257,10 +257,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  cardMobile: {
-    padding: 12,
-    borderRadius: 10,
-  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -270,20 +266,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  cardTitleMobile: {
-    fontSize: 16,
-  },
   cardTimestamp: {
     opacity: 0.6,
   },
-  cardTimestampMobile: {
-    fontSize: 12,
-  },
   cardSection: {
     gap: 4,
-  },
-  cardSectionMobile: {
-    gap: 2,
   },
   sectionLabel: {
     textTransform: 'uppercase',
@@ -291,17 +278,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     letterSpacing: 0.6,
   },
-  sectionLabelMobile: {
-    fontSize: 12,
-    letterSpacing: 0.4,
-  },
   meteoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-  },
-  meteoGridMobile: {
-    gap: 8,
   },
   meteoItem: {
     width: '48%',
@@ -316,16 +296,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  continueButtonMobile: {
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
   continueButtonText: {
     color: '#fff',
     fontWeight: '600',
-  },
-  continueButtonTextMobile: {
-    fontSize: 14,
   },
   centerContent: {
     alignItems: 'center',
