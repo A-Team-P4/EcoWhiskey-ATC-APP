@@ -154,15 +154,25 @@ export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, 
   console.log('frequency:', frequency);
   console.log('audio file name:', 'recording.mp3');
   console.log('audio file URI:', audioUri);
-  
+
   const formData = new FormData();
   formData.append('session_id', sessionId);
   formData.append('frequency',frequency);
-  formData.append('audio_file', {
-    uri: audioUri,
-    name: 'recording.mp3',
-    type: 'audio/mpeg',
-  } as any);
+
+  if (Platform.OS === 'web') {
+    // On web, fetch the blob and create a proper File object
+    const response = await fetch(audioUri);
+    const blob = await response.blob();
+    const file = new File([blob], 'recording.mp3', { type: 'audio/mpeg' });
+    formData.append('audio_file', file);
+  } else {
+    // On mobile, use the React Native format
+    formData.append('audio_file', {
+      uri: audioUri,
+      name: 'recording.mp3',
+      type: 'audio/mpeg',
+    } as any);
+  }
 
   const response = await apiClient.post('/audio/analyze', formData, {
     headers: {

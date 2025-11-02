@@ -127,7 +127,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       <Spacer size={16} />
 
       <View style={styles.switchContainer}>
-        <Typography variant="caption">Necesitas una cuenta?</Typography>
+        <Typography variant="caption">¿Necesitas una cuenta?</Typography>
         <TouchableOpacity onPress={() => router.replace('/register')} disabled={isLoading}>
           <Typography variant="caption" style={styles.switchLink}>
             Crea una cuenta
