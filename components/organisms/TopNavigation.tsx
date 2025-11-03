@@ -21,7 +21,6 @@ export const TopNavigation: React.FC = () => {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
 
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const isMobile = width < 768;
@@ -34,17 +33,10 @@ export const TopNavigation: React.FC = () => {
   };
 
   const closeMenus = () => {
-    setShowSettingsMenu(false);
     setShowAccountMenu(false);
-  };
-
-  const toggleSettingsMenu = () => {
-    setShowAccountMenu(false);
-    setShowSettingsMenu((prev) => !prev);
   };
 
   const toggleAccountMenu = () => {
-    setShowSettingsMenu(false);
     setShowAccountMenu((prev) => !prev);
   };
 
@@ -74,7 +66,7 @@ export const TopNavigation: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      {(showSettingsMenu || showAccountMenu) && (
+      {showAccountMenu && (
         <Pressable style={styles.menuBackdrop} onPress={closeMenus} />
       )}
 
@@ -85,29 +77,10 @@ export const TopNavigation: React.FC = () => {
             height: isMobile ? 50 : 60,
             width: isMobile ? 180 : 240,
           }}
-          
+          resizeMode="contain"
         />
 
         <View style={styles.iconRow}>
-          <View style={styles.iconWrapper}>
-            <TouchableOpacity onPress={toggleSettingsMenu} activeOpacity={0.7}>
-              <Icon type='MaterialIcons' name='settings' size={24} color='#666' />
-            </TouchableOpacity>
-
-            {showSettingsMenu && (
-              <View style={styles.dropdownMenu}>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={handleLogout}
-                  activeOpacity={0.7}
-                >
-                  <Icon type='MaterialIcons' name='logout' size={20} color='#666' />
-                  <ThemedText style={styles.menuItemText}>Cerrar Sesion</ThemedText>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
           <View style={styles.iconWrapper}>
             <TouchableOpacity onPress={toggleAccountMenu} activeOpacity={0.7}>
               {isLoading ? (

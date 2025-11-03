@@ -232,7 +232,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
           error={errors.school}
           required={accountType === 'instructor'}
           placeholder="Selecciona tu institución educativa"
-          searchable={true}
+        
         />
       </View>
       
@@ -249,20 +249,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
 
       <Spacer size={16} />
 
-      <View style={{ alignItems: 'center' }}>
-        <TouchableOpacity
-          onPress={() => router.replace('/login')}
-          disabled={isLoading}
-        >
-          <Typography
-            variant="caption"
-            style={{
-              color: '#000',
-              textDecorationLine: 'underline',
-              opacity: isLoading ? 0.5 : 1
-            }}
-          >
-            ¿Ya tienes cuenta? Inicia sesión
+      <View style={{ alignItems: 'center', flexDirection:'row', justifyContent:'center', gap:6, marginTop: 16 }}>
+        <Typography variant="caption">¿Ya tienes cuenta?</Typography>
+        <TouchableOpacity onPress={() => router.replace('/login')} disabled={isLoading} >
+          <Typography variant="caption" style={{ color: '#2196F3',fontWeight: '600', textDecorationLine: 'underline', opacity: isLoading ? 0.5 : 1 }} >
+             Inicia sesión
           </Typography>
         </TouchableOpacity>
       </View>

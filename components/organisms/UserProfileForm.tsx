@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { School, User } from '@/interfaces/user';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { Dropdown } from '../molecules/Dropdown';
 import { FormInput } from '../molecules/FormInput';
-import { School, User } from '@/interfaces/user';
 
 const toPreviewSource = (value?: string | null) => {
   if (!value) return null;
@@ -338,7 +338,6 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
           error={errors.school}
           required={userData.accountType === 'instructor'}
           placeholder={schoolPlaceholder}
-          searchable={!isSchoolLoading && schoolOptions.length > 5}
           enableFocusControl
           focusIcon="school"
           disabled={isSchoolLoading || schoolOptions.length === 0}

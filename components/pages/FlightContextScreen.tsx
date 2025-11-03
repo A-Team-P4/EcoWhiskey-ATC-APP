@@ -1,6 +1,5 @@
 import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import { Dropdown } from '@/components/molecules/Dropdown';
-import { MultiSelectDropdown } from '@/components/molecules/MultiSelectDropdown';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
 import { useSnackbar } from '@/hooks/useSnackbar';
@@ -49,8 +48,8 @@ export default function FlightContextScreen() {
     windSpeed: '',
   });
 
-  // Objectives state - can be multiple selections
-  const [objectives, setObjectives] = useState<string[]>([]);
+  // Objective state - single selection
+  const [objective, setObjective] = useState('');
 
   // Snackbar hook
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
@@ -68,6 +67,11 @@ export default function FlightContextScreen() {
     const route = departure && arrival ? `${departure}-${arrival}` : '';
 
     // Validate required fields
+    if (!objective) {
+      showSnackbar('Por favor seleccione un objetivo de práctica', 'error');
+      return;
+    }
+
     if (!route) {
       showSnackbar('Por favor seleccione aeropuertos de salida y llegada', 'error');
       return;
@@ -80,7 +84,7 @@ export default function FlightContextScreen() {
         ...meteo,
         wind,
       },
-      objectives,
+      objectives: objective ? [objective] : [],
     };
 
     console.log('📤 Sending training config:', trainingConfig);
@@ -117,7 +121,30 @@ export default function FlightContextScreen() {
 
 
         <View style={{ maxWidth: isWeb ? 1000 : '100%', width: '100%', alignSelf: 'center' }}>
-          
+
+          {/* Objectives Section */}
+          <View style={{ marginBottom: isWeb ? 16 : 2 }}>
+            <ThemedText
+              style={{
+                fontSize: 20,
+                fontWeight: '600',
+                marginBottom: isWeb ? 16 : 12,
+              }}
+            >
+              Objetivos de Práctica
+            </ThemedText>
+
+            {/* Objective Single-Select Dropdown */}
+            <Dropdown
+              label="Objetivo"
+              placeholder="Seleccione un objetivo"
+              options={OBJECTIVES}
+              value={objective}
+              onSelect={setObjective}
+             
+            />
+          </View>
+
           {/* Route Section */}
           <View style={{ marginBottom: isWeb ? 16 : 2 }}>
             <ThemedText
@@ -139,7 +166,7 @@ export default function FlightContextScreen() {
                   options={AIRPORTS}
                   value={departure}
                   onSelect={setDeparture}
-                  searchable={true}
+                  
                 />
               </View>
 
@@ -151,7 +178,7 @@ export default function FlightContextScreen() {
                   options={AIRPORTS}
                   value={arrival}
                   onSelect={setArrival}
-                  searchable={true}
+                  
                 />
               </View>
             </View>
@@ -192,7 +219,7 @@ export default function FlightContextScreen() {
                   options={CONDITIONS}
                   value={meteo.condition}
                   onSelect={(value) => setMeteo({ ...meteo, condition: value })}
-                  searchable={false}
+                
                 />
               </View>
 
@@ -204,7 +231,7 @@ export default function FlightContextScreen() {
                   options={VISIBILITY}
                   value={meteo.vis}
                   onSelect={(value) => setMeteo({ ...meteo, vis: value })}
-                  searchable={false}
+                
                 />
               </View>
 
@@ -216,7 +243,7 @@ export default function FlightContextScreen() {
                   options={QNH_VALUES}
                   value={meteo.qnh}
                   onSelect={(value) => setMeteo({ ...meteo, qnh: value })}
-                  searchable={true}
+                  
                 />
               </View>
             </View>
@@ -243,7 +270,7 @@ export default function FlightContextScreen() {
                   options={WIND_DIRECTIONS}
                   value={meteo.windDirection}
                   onSelect={(value) => setMeteo({ ...meteo, windDirection: value })}
-                  searchable={true}
+                  
                 />
               </View>
 
@@ -255,7 +282,7 @@ export default function FlightContextScreen() {
                   options={WIND_SPEEDS}
                   value={meteo.windSpeed}
                   onSelect={(value) => setMeteo({ ...meteo, windSpeed: value })}
-                  searchable={true}
+                  
                 />
               </View>
             </View>
@@ -273,29 +300,6 @@ export default function FlightContextScreen() {
                 </ThemedText>
               </View>
             )}
-          </View>
-
-          {/* Objectives Section */}
-          <View style={{ marginBottom: isWeb ? 16 : 2 }}>
-            <ThemedText
-              style={{
-                fontSize: 20,
-                fontWeight: '600',
-                marginBottom: isWeb ? 16 : 12,
-              }}
-            >
-              Objetivos de Práctica
-            </ThemedText>
-
-            {/* Objectives Multi-Select Dropdown */}
-            <MultiSelectDropdown
-              label="Objetivos"
-              placeholder="Seleccione uno o más objetivos"
-              options={OBJECTIVES}
-              values={objectives}
-              onSelect={setObjectives}
-              searchable={false}
-            />
           </View>
 
           {/* Start Button */}

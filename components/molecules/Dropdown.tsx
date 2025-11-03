@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Divider, HelperText, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
@@ -17,7 +17,6 @@ interface DropdownProps {
   error?: string;
   required?: boolean;
   placeholder?: string;
-  searchable?: boolean;
   enableFocusControl?: boolean;
   focusIcon?: string;
   disabled?: boolean;
@@ -31,41 +30,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
   error,
   required = false,
   placeholder = "Selecciona una opción",
-  searchable = true,
   enableFocusControl = false,
   focusIcon = 'pencil',
   disabled = false
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
-
-  useEffect(() => {
-    setFilteredOptions(options);
-  }, [options]);
 
   const displayLabel = required ? `${label} *` : label;
   const selectedOption = options.find(option => option.value === value);
   const displayValue = selectedOption ? selectedOption.label : '';
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    if (text === '') {
-      setFilteredOptions(options);
-    } else {
-      const filtered = options.filter(option =>
-        option.label.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredOptions(filtered);
-    }
-  };
-
   const handleSelect = (option: DropdownOption) => {
     onSelect(option.value);
     setIsVisible(false);
-    setSearchText('');
-    setFilteredOptions(options);
     setIsFocused(false);
   };
 
@@ -75,14 +53,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
     setIsVisible(true);
     setIsFocused(true);
-    setFilteredOptions(options);
   };
 
   const closeDropdown = () => {
     setIsVisible(false);
     setIsFocused(false);
-    setSearchText('');
-    setFilteredOptions(options);
   };
 
   const renderOption = ({ item }: { item: DropdownOption }) => (
@@ -147,10 +122,17 @@ export const Dropdown: React.FC<DropdownProps> = ({
           editable={false}
           placeholder={placeholder}
           right={
-            <TextInput.Icon 
-              icon={isVisible ? "chevron-up" : "chevron-down"} 
+            <TextInput.Icon
+              icon={() => (
+                <Icon
+                  name={isVisible ? "chevron-up" : "chevron-down"}
+                  type="Entypo"
+                  size={24}
+                  color={iconColor}
+                />
+              )}
               onPress={disabled ? undefined : openDropdown}
-              color={iconColor}
+              forceTextInputFocus={false}
             />
           }
         />
@@ -185,24 +167,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
               <Divider />
 
-              {/* Search Input (if searchable) */}
-              {searchable && (
-                <View style={styles.searchContainer}>
-                  <TextInput
-                    placeholder="Buscar..."
-                    value={searchText}
-                    onChangeText={handleSearch}
-                    style={styles.searchInput}
-                    mode="outlined"
-                    dense
-                    left={<TextInput.Icon icon="magnify" color="#8E8E93" />}
-                  />
-                </View>
-              )}
-
               {/* Options List */}
               <FlatList
-                data={filteredOptions}
+                data={options}
                 renderItem={renderOption}
                 keyExtractor={(item) => item.value}
                 style={styles.optionsList}
@@ -210,7 +177,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
                     <Typography variant="body" style={styles.emptyText}>
-                      {searchText ? 'No se encontraron resultados' : 'No hay opciones disponibles'}
+                      No hay opciones disponibles
                     </Typography>
                   </View>
                 }
@@ -281,13 +248,6 @@ const styles = StyleSheet.create({
   dropdownTitle: {
     fontWeight: '600',
     color: '#1C1C1E',
-  },
-  searchContainer: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  searchInput: {
-    backgroundColor: '#FFFFFF',
   },
   optionsList: {
     maxHeight: 300,
