@@ -1,11 +1,12 @@
 import { LoginCredentials } from '@/interfaces/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { FormInput } from '../molecules/FormInput';
+import { requestPasswordReset } from '@/services/apiClient';
 
 interface FormErrors {
   email?: string;
@@ -26,6 +27,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isResetModalVisible, setIsResetModalVisible] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailError, setResetEmailError] = useState<string | undefined>();
+  const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+  const [resetSubmitError, setResetSubmitError] = useState<string | null>(null);
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +62,55 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       email: email.trim().toLowerCase(),
       password,
     });
+  };
+
+  const handleOpenResetModal = () => {
+    setResetEmail('');
+    setResetEmailError(undefined);
+    setResetSubmitError(null);
+    setIsResetModalVisible(true);
+  };
+
+  const handleCloseResetModal = () => {
+    setIsResetModalVisible(false);
+    setResetSubmitError(null);
+  };
+
+  const handleResetPassword = async () => {
+    const trimmedEmail = resetEmail.trim().toLowerCase();
+
+    if (!trimmedEmail) {
+      setResetEmailError('El correo es requerido');
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
+      setResetEmailError('Formato de correo invalido');
+      return;
+    }
+
+    setResetSubmitError(null);
+    setIsResetSubmitting(true);
+    try {
+      const response = await requestPasswordReset(trimmedEmail);
+      Alert.alert('Recuperacion de contrasena', response.message);
+      setResetEmail('');
+      setIsResetModalVisible(false);
+    } catch (catchError) {
+      const fallbackMessage = 'No pudimos procesar tu solicitud. Intenta de nuevo mas tarde.';
+      const errorWithResponse =
+        typeof catchError === 'object' && catchError !== null && 'response' in catchError
+          ? (catchError as { response?: { data?: { detail?: unknown } } }).response
+          : undefined;
+      const apiDetail =
+        typeof errorWithResponse?.data?.detail === 'string' ? errorWithResponse.data.detail : null;
+      const genericMessage =
+        catchError instanceof Error && catchError.message ? catchError.message : null;
+
+      setResetSubmitError(apiDetail ?? genericMessage ?? fallbackMessage);
+    } finally {
+      setIsResetSubmitting(false);
+    }
   };
 
   return (
@@ -107,6 +162,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
         secureTextEntry
       />
 
+      <View style={styles.forgotPasswordContainer}>
+        <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
+          <Typography variant="caption" style={styles.forgotPasswordLink}>
+            Olvidaste tu contrasena?
+          </Typography>
+        </TouchableOpacity>
+      </View>
+
       {serverError ? (
         <Typography variant="caption" style={styles.serverError}>
           {serverError}
@@ -134,6 +197,59 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
           </Typography>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={isResetModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={handleCloseResetModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalContainer, isWeb && styles.modalContainerWeb]}>
+            <Typography variant="h2" style={styles.modalTitle}>
+              Recuperar contrasena
+            </Typography>
+            <Spacer size={8} />
+            <Typography variant="body" style={styles.modalSubtitle}>
+              Ingresa el correo asociado a tu cuenta para recibir instrucciones.
+            </Typography>
+            <Spacer size={16} />
+            <FormInput
+              label="Correo electronico"
+              value={resetEmail}
+              onChangeText={(value) => {
+                setResetEmail(value);
+                if (resetEmailError) {
+                  setResetEmailError(undefined);
+                }
+                if (resetSubmitError) {
+                  setResetSubmitError(null);
+                }
+              }}
+              error={resetEmailError}
+              required
+              keyboardType="email-address"
+            />
+            <Spacer size={16} />
+            <ActionButton
+              title={isResetSubmitting ? 'Enviando...' : 'Enviar instrucciones'}
+              onPress={handleResetPassword}
+              loading={isResetSubmitting}
+            />
+            {resetSubmitError ? (
+              <Typography variant="caption" style={styles.modalError}>
+                {resetSubmitError}
+              </Typography>
+            ) : null}
+            <Spacer size={12} />
+            <TouchableOpacity onPress={handleCloseResetModal}>
+              <Typography variant="caption" style={styles.modalCancelLink}>
+                Cancelar
+              </Typography>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       
     </View>
@@ -182,5 +298,50 @@ const styles = StyleSheet.create({
     color: '#2196F3',
     textDecorationLine: 'underline',
     fontWeight: '600',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: 8,
+  },
+  forgotPasswordLink: {
+    color: '#2196F3',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 420,
+  },
+  modalContainerWeb: {
+    maxWidth: 400,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+  modalSubtitle: {
+    textAlign: 'center',
+    color: '#4b5563',
+  },
+  modalError: {
+    marginTop: 8,
+    textAlign: 'center',
+    color: '#ef4444',
+  },
+  modalCancelLink: {
+    textAlign: 'center',
+    color: '#6b7280',
+    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
 });
