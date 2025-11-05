@@ -13,20 +13,6 @@ interface IconProps {
   style?: ViewStyle; // optional additional style
 }
 
-const loadedIconFonts = new Set<string>();
-
-const ensureFontLoaded = (type: keyof typeof IconSets, IconComponent: any) => {
-  if (loadedIconFonts.has(type)) {
-    return;
-  }
-  if (IconComponent?.loadFont) {
-    IconComponent.loadFont().catch((error: unknown) => {
-      console.warn(`Failed to load font for icon set "${String(type)}":`, error);
-    });
-    loadedIconFonts.add(type);
-  }
-};
-
 export const Icon: React.FC<IconProps> = ({
   name,
   size = 24,
@@ -40,11 +26,8 @@ export const Icon: React.FC<IconProps> = ({
 
   if (!IconComponent) {
     console.warn(`Icon set "${type}" not found. Falling back to Ionicons.`);
-    const FallbackIcon = IconSets.Ionicons as any;
-    ensureFontLoaded('Ionicons', FallbackIcon);
-    return <FallbackIcon name={name as any} size={size} color={color} />;
+    return <IconSets.Ionicons name={name as any} size={size} color={color} />;
   }
-  ensureFontLoaded(type, IconComponent);
 
   const iconElement = <IconComponent name={name as any} size={size} color={color} />;
 
