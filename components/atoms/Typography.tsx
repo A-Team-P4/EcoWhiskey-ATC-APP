@@ -29,15 +29,10 @@ export const Typography: React.FC<TypographyProps> = ({
     }
   };
 
-  const textStyle: TextStyle = { textAlign: align };
-  if (color) {
-    textStyle.color = color;
-  }
-
   return (
     <RNText style={[
       getVariantStyle(),
-      textStyle,
+      { color, textAlign: align },
       style
     ]}>
       {children}

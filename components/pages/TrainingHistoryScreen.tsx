@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 
 import { Spacer } from '@/components/atoms/Spacer';
@@ -50,8 +49,6 @@ interface TrainingSessionCardProps {
 
 const TrainingSessionCard = ({ session, onContinue }: TrainingSessionCardProps) => {
   const { context } = session;
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
 
   const objectives = useMemo(
     () => formatObjectives(context?.objectives),
@@ -59,37 +56,35 @@ const TrainingSessionCard = ({ session, onContinue }: TrainingSessionCardProps) 
   );
 
   const sessionDate = useMemo(() => formatDateTime(session.createdAt), [session.createdAt]);
-  const sectionSpacing = isMobile ? 8 : 12;
-  const footerSpacing = isMobile ? 12 : 16;
 
   return (
-    <View style={[styles.card, isMobile && styles.cardMobile]}>
+    <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Typography variant="h3" style={[styles.cardTitle, isMobile && styles.cardTitleMobile]}>
+        <Typography variant="h3" style={styles.cardTitle}>
           {sessionDate}
         </Typography>
-        <Typography variant="caption" style={[styles.cardTimestamp, isMobile && styles.cardTimestampMobile]}>
+        <Typography variant="caption" style={styles.cardTimestamp}>
           {context?.route || UNKNOWN_VALUE}
         </Typography>
       </View>
 
-      <Spacer size={sectionSpacing} />
+      <Spacer size={12} />
 
-      <View style={[styles.cardSection, isMobile && styles.cardSectionMobile]}>
-        <Typography variant="caption" style={[styles.sectionLabel, isMobile && styles.sectionLabelMobile]}>
+      <View style={styles.cardSection}>
+        <Typography variant="caption" style={styles.sectionLabel}>
           Objetivos
         </Typography>
         <Typography variant="body">{objectives}</Typography>
       </View>
 
-      <Spacer size={sectionSpacing} />
+      <Spacer size={12} />
 
-      <View style={[styles.cardSection, isMobile && styles.cardSectionMobile]}>
-        <Typography variant="caption" style={[styles.sectionLabel, isMobile && styles.sectionLabelMobile]}>
+      <View style={styles.cardSection}>
+        <Typography variant="caption" style={styles.sectionLabel}>
           Condiciones Meteorológicas
         </Typography>
 
-        <View style={[styles.meteoGrid, isMobile && styles.meteoGridMobile]}>
+        <View style={styles.meteoGrid}>
           <View style={styles.meteoItem}>
             <Typography variant="caption" style={styles.meteoLabel}>
               Condición
@@ -122,13 +117,10 @@ const TrainingSessionCard = ({ session, onContinue }: TrainingSessionCardProps) 
         </View>
       </View>
 
-      <Spacer size={footerSpacing} />
+      <Spacer size={16} />
 
-      <TouchableOpacity
-        style={[styles.continueButton, isMobile && styles.continueButtonMobile]}
-        onPress={() => onContinue(session)}
-      >
-        <Typography variant="body" style={[styles.continueButtonText, isMobile && styles.continueButtonTextMobile]}>
+      <TouchableOpacity style={styles.continueButton} onPress={() => onContinue(session)}>
+        <Typography variant="body" style={styles.continueButtonText}>
           Continuar sesión
         </Typography>
       </TouchableOpacity>
@@ -141,8 +133,6 @@ export default function TrainingHistoryScreen() {
   const userId = currentUser?.id;
 
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
 
   const {
     data: history = [],
@@ -216,11 +206,11 @@ export default function TrainingHistoryScreen() {
         )}
 
         {!isBusy && !error && history.length > 0 && (
-          <View style={[styles.list, isMobile && styles.listMobile]}>
+          <View style={styles.list}>
             {history.map((session) => (
               <React.Fragment key={session.trainingSessionId ?? session.createdAt}>
                 <TrainingSessionCard session={session} onContinue={handleContinueSession} />
-                <Spacer size={isMobile ? 12 : 16} />
+                <Spacer size={16} />
               </React.Fragment>
             ))}
           </View>
@@ -244,9 +234,6 @@ const styles = StyleSheet.create({
   list: {
     gap: 16,
   },
-  listMobile: {
-    gap: 12,
-  },
   card: {
     backgroundColor: '#f8f8f9',
     borderRadius: 12,
@@ -257,10 +244,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  cardMobile: {
-    padding: 12,
-    borderRadius: 10,
-  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -270,20 +253,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  cardTitleMobile: {
-    fontSize: 16,
-  },
   cardTimestamp: {
     opacity: 0.6,
   },
-  cardTimestampMobile: {
-    fontSize: 12,
-  },
   cardSection: {
     gap: 4,
-  },
-  cardSectionMobile: {
-    gap: 2,
   },
   sectionLabel: {
     textTransform: 'uppercase',
@@ -291,17 +265,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     letterSpacing: 0.6,
   },
-  sectionLabelMobile: {
-    fontSize: 12,
-    letterSpacing: 0.4,
-  },
   meteoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-  },
-  meteoGridMobile: {
-    gap: 8,
   },
   meteoItem: {
     width: '48%',
@@ -316,16 +283,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  continueButtonMobile: {
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
   continueButtonText: {
     color: '#fff',
     fontWeight: '600',
-  },
-  continueButtonTextMobile: {
-    fontSize: 14,
   },
   centerContent: {
     alignItems: 'center',
