@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HelperText, TextInput } from 'react-native-paper';
 
+import { Icon } from '../atoms/Icon';
+
 interface FormInputProps {
   label: string;
   value: string;
@@ -13,8 +15,10 @@ interface FormInputProps {
   autoCapitalize?: any;
   placeholder?: string;
   enableFocusControl?: boolean;
-  focusIcon?: string;
-  onFocusControlPress?: () => void;
+  leftIconName?: string;
+  leftIconType?: React.ComponentProps<typeof Icon>['type'];
+  leftIconColor?: string;
+  onIconPress?: () => void;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -28,8 +32,10 @@ export const FormInput: React.FC<FormInputProps> = ({
   autoCapitalize = 'none',
   placeholder,
   enableFocusControl = false,
-  focusIcon = 'pencil',
-  onFocusControlPress,
+  leftIconName,
+  leftIconType = 'MaterialIcons',
+  leftIconColor,
+  onIconPress,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -37,13 +43,24 @@ export const FormInput: React.FC<FormInputProps> = ({
 
   const displayLabel = required ? `${label} *` : label;
   const isSecure = secureTextEntry && !showPassword;
+  const shouldShowLeftIcon = Boolean(leftIconName);
+  const resolvedIconColor = leftIconColor ?? '#6B7280';
 
   const customTheme = {
     colors: {
-      onSurface: '#000000', // Label color when not focused
-      onSurfaceVariant: '#000000', // Label color when not focused
-      primary: '#2196F3', // Label and border color when focused
+      onSurface: '#000000',
+      onSurfaceVariant: '#000000',
+      primary: '#2196F3',
     },
+  };
+
+  const handleIconPress = () => {
+    if (onIconPress) {
+      onIconPress();
+    }
+    if (enableFocusControl) {
+      inputRef.current?.focus();
+    }
   };
 
   return (
@@ -61,7 +78,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         outlineStyle={[
           styles.inputOutline,
           isFocused && styles.inputOutlineFocused,
-          error && styles.inputOutlineError
+          error && styles.inputOutlineError,
         ]}
         error={!!error}
         secureTextEntry={isSecure}
@@ -70,26 +87,26 @@ export const FormInput: React.FC<FormInputProps> = ({
         placeholder={placeholder}
         mode="outlined"
         left={
-          enableFocusControl
-            ? (
-              <TextInput.Icon
-                icon={focusIcon}
-                onPress={() => {
-                  if (onFocusControlPress) {
-                    onFocusControlPress();
-                  }
-                  inputRef.current?.focus();
-                }}
-              />
-            )
-            : undefined
+          shouldShowLeftIcon ? (
+            <TextInput.Icon
+              icon={() => (
+                <Icon
+                  name={leftIconName as string}
+                  type={leftIconType}
+                  size={22}
+                  color={resolvedIconColor}
+                />
+              )}
+              onPress={enableFocusControl || onIconPress ? handleIconPress : undefined}
+              forceTextInputFocus={false}
+            />
+          ) : undefined
         }
         right={
           secureTextEntry ? (
-            <TextInput.Icon 
-              icon={showPassword ? "eye-off" : "eye"} 
+            <TextInput.Icon
+              icon={showPassword ? 'eye-off' : 'eye'}
               onPress={() => setShowPassword(!showPassword)}
-              //iconColor="#8E8E93"
             />
           ) : undefined
         }
@@ -103,20 +120,20 @@ export const FormInput: React.FC<FormInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-   marginBottom: 8,
+    marginBottom: 8,
   },
   input: {
-   backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
   },
   inputFocused: {
- //   backgroundColor: '#FFFFFF',
+    // backgroundColor: '#FFFFFF',
   },
   inputContent: {
     color: '#1C1C1E',
   },
   inputOutline: {
     borderRadius: 8,
- //   borderColor: '#E5E5EA',
+    // borderColor: '#E5E5EA',
   },
   inputOutlineFocused: {
     borderColor: '#2196F3',

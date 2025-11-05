@@ -1,12 +1,13 @@
 import { LoginCredentials } from '@/interfaces/user';
+import { requestPasswordReset } from '@/services/apiClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { FormInput } from '../molecules/FormInput';
-import { requestPasswordReset } from '@/services/apiClient';
 
 interface FormErrors {
   email?: string;
@@ -161,6 +162,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
         required
         secureTextEntry
       />
+      
 
       <View style={styles.forgotPasswordContainer}>
         <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
@@ -206,9 +208,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       >
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalContainer, isWeb && styles.modalContainerWeb]}>
-            <Typography variant="h2" style={styles.modalTitle}>
-              Recuperar contrasena
-            </Typography>
+            <View style={styles.modalHeader}>
+              <Typography variant="h2" style={styles.modalTitle}>
+                Recuperar contrasena
+              </Typography>
+              <TouchableOpacity
+                onPress={handleCloseResetModal}
+                style={styles.modalCloseButton}
+                accessibilityRole="button"
+              >
+                <Icon type="MaterialIcons" name="close" color="#000" size={24} />
+              </TouchableOpacity>
+            </View>
             <Spacer size={8} />
             <Typography variant="body" style={styles.modalSubtitle}>
               Ingresa el correo asociado a tu cuenta para recibir instrucciones.
@@ -321,6 +332,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     maxWidth: 420,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    padding: 4,
   },
   modalContainerWeb: {
     maxWidth: 400,

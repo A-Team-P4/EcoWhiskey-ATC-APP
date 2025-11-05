@@ -150,8 +150,8 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 <Typography variant="h3" style={styles.dropdownTitle}>
                   {label}
                 </Typography>
-                <TouchableOpacity onPress={closeDropdown}>
-                  <Icon name="close" size={24} color="#8E8E93" />
+                <TouchableOpacity onPress={closeDropdown} accessibilityRole="button">
+                  <Icon type="MaterialIcons" name="close" color="#000" size={24} />
                 </TouchableOpacity>
               </View>
 
