@@ -77,7 +77,6 @@ export const TopNavigation: React.FC = () => {
             height: isMobile ? 50 : 60,
             width: isMobile ? 180 : 240,
           }}
-          resizeMode="contain"
         />
 
         <View style={styles.iconRow}>
