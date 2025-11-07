@@ -121,7 +121,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             error={errors.currentPassword}
             secureTextEntry
             enableFocusControl
-            focusIcon="lock"
+            leftIconName="lock"
           />
 
           <FormInput
@@ -131,7 +131,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             error={errors.newPassword}
             secureTextEntry
             enableFocusControl
-            focusIcon="lock-reset"
+            leftIconName="vpn-key"
           />
 
           <FormInput
@@ -141,7 +141,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             error={errors.confirmPassword}
             secureTextEntry
             enableFocusControl
-            focusIcon="check"
+            leftIconName="check-circle"
           />
 
           <Spacer size={12} />
@@ -151,7 +151,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             onPress={handleSubmit}
             loading={isLoading}
             disabled={isLoading}
-            icon="lock"
+            iconName="lock"
           />
         </>
       )}

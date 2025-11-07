@@ -18,7 +18,9 @@ interface DropdownProps {
   required?: boolean;
   placeholder?: string;
   enableFocusControl?: boolean;
-  focusIcon?: string;
+  leftIconName?: string;
+  leftIconType?: React.ComponentProps<typeof Icon>['type'];
+  leftIconColor?: string;
   disabled?: boolean;
 }
 
@@ -31,7 +33,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
   required = false,
   placeholder = "Selecciona una opción",
   enableFocusControl = false,
-  focusIcon = 'pencil',
+  leftIconName,
+  leftIconType = 'MaterialIcons',
+  leftIconColor,
   disabled = false
 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -86,6 +90,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 
   const iconColor = disabled ? '#C7C7CC' : '#000';
+  const leftIconColorResolved = leftIconColor ?? iconColor;
 
   return (
     <View style={styles.container}>
@@ -108,13 +113,21 @@ export const Dropdown: React.FC<DropdownProps> = ({
           error={!!error}
           mode="outlined"
           left={
-            enableFocusControl
+            leftIconName
               ? (
                 <TextInput.Icon
-                  icon={focusIcon}
-                  onPress={disabled ? undefined : openDropdown}
+                  icon={() => (
+                    <Icon
+                      name={leftIconName}
+                      type={leftIconType}
+                      size={22}
+                      color={leftIconColorResolved}
+                    />
+                  )}
+                  onPress={
+                    !disabled && enableFocusControl ? openDropdown : undefined
+                  }
                   forceTextInputFocus={false}
-                  color={iconColor}
                 />
               )
               : undefined
@@ -160,8 +173,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 <Typography variant="h3" style={styles.dropdownTitle}>
                   {label}
                 </Typography>
-                <TouchableOpacity onPress={closeDropdown}>
-                  <Icon name="close" size={24} color="#8E8E93" />
+                <TouchableOpacity onPress={closeDropdown} accessibilityRole="button">
+                  <Icon type="MaterialIcons" name="close" color="#000" size={24} />
                 </TouchableOpacity>
               </View>
 

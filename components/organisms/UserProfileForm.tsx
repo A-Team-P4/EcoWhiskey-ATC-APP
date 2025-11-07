@@ -254,7 +254,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             variant="outline"
             loading={isSelectingPhoto}
             disabled={isLoading || isSelectingPhoto}
-            icon="camera-plus"
+            iconName="photo-camera"
           />
 
           {(photoPreview || userData.photo) && (
@@ -263,7 +263,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
               onPress={handleRemovePhoto}
               variant="secondary"
               disabled={isLoading || isSelectingPhoto}
-              icon="trash-can"
+              iconName="delete"
             />
           )}
 
@@ -312,7 +312,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
               required
               autoCapitalize="words"
               enableFocusControl
-              focusIcon="account"
+              leftIconName="person"
             />
           </View>
 
@@ -325,7 +325,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
               required
               autoCapitalize="words"
               enableFocusControl
-              focusIcon="account-outline"
+              leftIconName="badge"
             />
           </View>
         </View>
@@ -339,7 +339,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
           required={userData.accountType === 'instructor'}
           placeholder={schoolPlaceholder}
           enableFocusControl
-          focusIcon="school"
+          leftIconName="school"
           disabled={isSchoolLoading || schoolOptions.length === 0}
         />
       </View>
