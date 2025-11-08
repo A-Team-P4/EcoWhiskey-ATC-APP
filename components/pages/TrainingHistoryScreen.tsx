@@ -1,25 +1,25 @@
 import React, { useCallback, useMemo } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
+import { TrainingSession } from '@/interfaces/training';
 import { useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
-import { TrainingSession } from '@/interfaces/training';
-import { OBJECTIVES } from '@/utils/dropDowns';
+import { SCENARIOS } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
 
 const UNKNOWN_VALUE = 'No disponible';
 
-const OBJECTIVE_LABEL_MAP = OBJECTIVES.reduce<Record<string, string>>((acc, { value, label }) => {
+const OBJECTIVE_LABEL_MAP = SCENARIOS.reduce<Record<string, string>>((acc, { value, label }) => {
   acc[value] = label;
   return acc;
 }, {});
