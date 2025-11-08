@@ -314,4 +314,27 @@ export const getSessionSummary = async (sessionId: string) => {
   }
 };
 
+// METAR data interface
+export interface METARData {
+  icaoId: string;
+  temp: number;
+  dewp: number;
+  wdir: number;
+  wspd: number;
+  visib: string;
+  altim: number;
+  rawOb: string;
+  clouds?: Array<{
+    cover: string;
+    base: number;
+  }>;
+  fltCat: string;
+}
+
+// Fetch current METAR data via backend proxy
+export const fetchMETARData = async (icaoCode: string): Promise<METARData> => {
+  const response = await apiClient.get<METARData>(`/metar/${icaoCode}`);
+  return response.data;
+};
+
 export default apiClient;

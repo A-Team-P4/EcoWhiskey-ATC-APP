@@ -150,7 +150,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       />
 
       <FormInput
-        label="Contrasena"
+        label="Contraseña"
         value={password}
         onChangeText={(value) => {
           setPassword(value);

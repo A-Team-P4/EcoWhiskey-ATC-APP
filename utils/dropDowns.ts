@@ -19,8 +19,8 @@ export const AIRPORTS = [
 ];
 
 export const CONDITIONS = [
-  { label: 'VMC - Visual Meteorological Conditions', value: 'VMC' },
-  { label: 'IMC - Instrument Meteorological Conditions', value: 'IMC' },
+  { label: 'VMC', value: 'VMC' },
+  { label: 'IMC', value: 'IMC' },
 ];
 
 export const VISIBILITY = [
