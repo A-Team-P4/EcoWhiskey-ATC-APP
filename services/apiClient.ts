@@ -145,6 +145,11 @@ export const changeUserPassword = async (
   return response.data;
 };
 
+export const requestPasswordReset = async (email: string): Promise<SuccessResponse> => {
+  const response = await apiClient.post<SuccessResponse>('/auth/forgot-password', { email });
+  return response.data;
+};
+
 
 
 // Audio interaction function
