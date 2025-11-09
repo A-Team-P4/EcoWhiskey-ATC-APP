@@ -27,13 +27,13 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   const getButtonClassName = () => {
     switch (variant) {
       case 'primary':
-        return 'rounded-md bg-black shadow-lg';
+        return 'rounded-md bg-black ';
       case 'secondary':
         return 'rounded-md bg-gray-400';
       case 'outline':
         return 'rounded-md border-black';
       default:
-        return 'rounded-md bg-black shadow-lg';
+        return 'rounded-md bg-black ';
     }
   };
 

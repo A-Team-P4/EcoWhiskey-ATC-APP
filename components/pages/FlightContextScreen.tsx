@@ -7,8 +7,8 @@ import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
 import { fetchMETARData } from '@/services/apiClient';
 import { AIRPORTS, CONDITIONS, SCENARIOS, VISIBILITY } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
 
@@ -90,12 +90,12 @@ export default function FlightContextScreen() {
   // Training context mutation
   const { mutate: createContext, isPending } = useCreateTrainingContext();
 
-  // Debug: Log meteo state changes
-  useEffect(() => {
-    console.log('🔍 Meteo state updated:', meteo);
-    console.log('🔍 QNH value:', meteo.qnh, 'Type:', typeof meteo.qnh);
-    console.log('🔍 Condition value:', meteo.condition, 'Type:', typeof meteo.condition);
-  }, [meteo]);
+  // Debug: Log meteo state changes (commented out to reduce console noise)
+  // useEffect(() => {
+  //   console.log('🔍 Meteo state updated:', meteo);
+  //   console.log('🔍 QNH value:', meteo.qnh, 'Type:', typeof meteo.qnh);
+  //   console.log('🔍 Condition value:', meteo.condition, 'Type:', typeof meteo.condition);
+  // }, [meteo]);
 
   // Function to map METAR visibility to our format
   const mapMETARVisibility = (visib: string): string => {
@@ -599,10 +599,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 3px 5px rgba(0, 0, 0, 0.2)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+    }),
     elevation: 5,
   },
   startButtonDisabled: {

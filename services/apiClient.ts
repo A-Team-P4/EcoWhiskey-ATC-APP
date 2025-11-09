@@ -84,8 +84,8 @@ apiClient.interceptors.response.use(
 
     // Handle common errors
     if (error.response?.status === 401) {
-      // Token expired - you might want to redirect to login
-      AsyncStorage.removeItem('@auth_token');
+      // Token expired or invalid - clear all auth data
+      AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
     }
 
     return Promise.reject(error);

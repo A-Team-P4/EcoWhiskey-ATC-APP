@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import {
     ActivityIndicator,
+    Platform,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -238,10 +239,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f9',
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+    }),
     elevation: 3,
   },
   cardHeader: {

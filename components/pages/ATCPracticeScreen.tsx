@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, Modal, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Modal, Platform, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Switch } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
 
@@ -367,8 +367,8 @@ export default function AudioInteractionScreen() {
 
       <View style={{ paddingHorizontal: 20, marginBottom: 8, paddingTop:16 }}>
         <TouchableOpacity onPress={handleOpenModal} activeOpacity={0.98}>
-          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 14, paddingRight: 16, paddingLeft: 16, paddingTop:4, borderWidth: 1, borderColor: '#E9ECEF', 
-                shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View style={{ backgroundColor: '#F8F9FA', borderRadius: 14, paddingRight: 16, paddingLeft: 16, paddingTop:4, borderWidth: 1, borderColor: '#E9ECEF',
+                ...(Platform.OS === 'web' ? { boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)' } : { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6 }), elevation: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Icon type="Foundation" name="graph-bar" color="#4CAF50" size={16} />
@@ -399,7 +399,7 @@ export default function AudioInteractionScreen() {
 
       <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 10 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' } : { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16 }), elevation: 10 }}>
             <ThemedText style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#000' }}>
               Ingrese una frecuencia
             </ThemedText>
@@ -447,7 +447,7 @@ export default function AudioInteractionScreen() {
       {/* Exit confirmation modal */}
       <Modal animationType="fade" transparent={true} visible={showWarningModal} onRequestClose={handleCancelExitWrapper}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 10 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' } : { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16 }), elevation: 10 }}>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
               <Icon type="MaterialIcons" name="warning" color="#FF9800" size={48} />
             </View>
@@ -540,7 +540,7 @@ export default function AudioInteractionScreen() {
 
             <Button
               mode="contained"
-              className="w-24 h-24 rounded-full shadow-lg"
+              className="w-24 h-24 rounded-full "
               onPress={recorderState.isRecording ? stopRecording : startRecording}
               style={{ backgroundColor: recorderState.isRecording ? '#22C55E' : '#000' }}
               contentStyle={{ width: 85, height: 85, justifyContent: 'center', alignItems: 'center', borderRadius: 9999 }}
@@ -591,7 +591,7 @@ export default function AudioInteractionScreen() {
 
       {settingsDrawerVisible && (
         <TouchableOpacity style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)' }} activeOpacity={1} onPress={toggleSettingsDrawer}>
-          <Animated.View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: Dimensions.get('window').width * 0.85, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: -2, height: 0 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 10, transform: [{ translateX: drawerAnimation.interpolate({ inputRange: [0, 1], outputRange: [Dimensions.get('window').width * 0.85, 0] }) }] }} onStartShouldSetResponder={() => true}>
+          <Animated.View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: Dimensions.get('window').width * 0.85, backgroundColor: '#fff', ...(Platform.OS === 'web' ? { boxShadow: '-2px 0 8px rgba(0, 0, 0, 0.3)' } : { shadowColor: '#000', shadowOffset: { width: -2, height: 0 }, shadowOpacity: 0.3, shadowRadius: 8 }), elevation: 10, transform: [{ translateX: drawerAnimation.interpolate({ inputRange: [0, 1], outputRange: [Dimensions.get('window').width * 0.85, 0] }) }] }} onStartShouldSetResponder={() => true}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }}>
               <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>
                 Configuración

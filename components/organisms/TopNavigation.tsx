@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import {
-  Image,
+  Platform,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -13,25 +14,37 @@ import { Avatar } from 'react-native-paper';
 import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
-import { useGetMe } from '@/query_hooks/useGetMe';
+import { useCurrentUser } from '@/query_hooks/useUserProfile';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'expo-router';
 
 export const TopNavigation: React.FC = () => {
-  const { data: user, isLoading } = useGetMe();
+  const { data: user, isLoading } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const { requestNavigation } = useNavigationWarning();
+  const queryClient = useQueryClient();
 
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const isMobile = width < 768;
   const isATCActive = pathname.includes('ATCTrainingTab');
+  const isTrainingHistoryTab = pathname.includes('TrainingHistoryTab');
   const isScoresActive = pathname.includes('ScoresTab');
+  const isUserProfileTab = pathname.includes('UserProfileTab');
 
   const getInitials = () => {
     if (!user?.firstName || !user?.lastName) return '?';
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  };
+
+  const getPhotoUri = () => {
+    if (!user?.photo) return null;
+    if (user.photo.startsWith('data:') || user.photo.startsWith('http') || user.photo.startsWith('file:')) {
+      return user.photo;
+    }
+    return `data:image/jpeg;base64,${user.photo}`;
   };
 
   const closeMenus = () => {
@@ -44,7 +57,12 @@ export const TopNavigation: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('@auth_token');
+      // Remove all auth-related data from AsyncStorage
+      await AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+
+      // Clear React Query cache
+      queryClient.clear();
+
       closeMenus();
       router.replace('/login');
     } catch (error) {
@@ -72,12 +90,7 @@ export const TopNavigation: React.FC = () => {
     });
   };
 
-  const handleHistoryPress = () => {
-    setShowAccountMenu(false);
-    requestNavigation(() => {
-      router.push('/(tabs)/TrainingHistoryTab');
-    });
-  };
+ 
 
   return (
     <View style={styles.root}>
@@ -99,6 +112,14 @@ export const TopNavigation: React.FC = () => {
             <TouchableOpacity onPress={toggleAccountMenu} activeOpacity={0.7}>
               {isLoading ? (
                 <Avatar.Icon size={40} icon='account' style={{ backgroundColor: '#e0e0e0' }} />
+              ) : getPhotoUri() ? (
+                <View style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: '#000' }}>
+                  <Image
+                    source={getPhotoUri()!}
+                    style={{ width: 40, height: 40 }}
+                    contentFit="cover"
+                  />
+                </View>
               ) : (
                 <Avatar.Text
                   size={40}
@@ -119,14 +140,7 @@ export const TopNavigation: React.FC = () => {
                   <Icon type='MaterialIcons' name='person' size={20} color='#666' />
                   <ThemedText style={styles.menuItemText}>Perfil</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={handleHistoryPress}
-                  activeOpacity={0.7}
-                >
-                  <Icon type='MaterialIcons' name='history' size={20} color='#666' />
-                  <ThemedText style={styles.menuItemText}>Historial</ThemedText>
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handleLogout}
@@ -159,16 +173,29 @@ export const TopNavigation: React.FC = () => {
                   size={20}
                   color={isATCActive ? '#2196F3' : '#666'}
                 />
-                <ThemedText
-                  style={[
-                    styles.webTabLabel,
-                    {
-                      fontWeight: isATCActive ? '600' : '400',
-                      color: isATCActive ? '#2196F3' : '#666',
-                    },
-                  ]}
-                >
+                <ThemedText style={[ styles.webTabLabel, { fontWeight: isATCActive ? '600' : '400', color: isATCActive ? '#2196F3' : '#666',  }, ]} >
                   ATC Practice
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleATCPress}
+              activeOpacity={0.7}
+              style={[
+                styles.webTabButton,
+                { borderBottomColor: isTrainingHistoryTab ? '#3d93d8' : 'transparent' },
+              ]}
+            >
+              <View style={styles.webTabContent}>
+                <Icon
+                  type='FontAwesome5'
+                  name='history'
+                  size={20}
+                  color={isTrainingHistoryTab ? '#2196F3' : '#666'}
+                />
+                <ThemedText style={[ styles.webTabLabel, { fontWeight: isTrainingHistoryTab ? '600' : '400', color: isTrainingHistoryTab ? '#2196F3' : '#666',  }, ]} >
+                  Historial
                 </ThemedText>
               </View>
             </TouchableOpacity>
@@ -188,19 +215,13 @@ export const TopNavigation: React.FC = () => {
                   size={20}
                   color={isScoresActive ? '#2196F3' : '#666'}
                 />
-                <ThemedText
-                  style={[
-                    styles.webTabLabel,
-                    {
-                      fontWeight: isScoresActive ? '600' : '400',
-                      color: isScoresActive ? '#2196F3' : '#666',
-                    },
-                  ]}
-                >
-                  Score
+               <ThemedText style={[ styles.webTabLabel, { fontWeight: isScoresActive ? '600' : '400', color: isScoresActive ? '#2196F3' : '#666',  }, ]} >
+                  Evaluación
                 </ThemedText>
               </View>
             </TouchableOpacity>
+
+           
           </View>
         </View>
       )}
@@ -247,10 +268,14 @@ const styles = StyleSheet.create({
     minWidth: 200,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+    }),
     elevation: 12,
     zIndex: 30,
   },
