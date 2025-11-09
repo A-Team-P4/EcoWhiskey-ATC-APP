@@ -164,13 +164,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       />
       
 
-      <View style={styles.forgotPasswordContainer}>
-        <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
-          <Typography variant="caption" style={styles.forgotPasswordLink}>
-            Olvidaste tu contrasena?
-          </Typography>
-        </TouchableOpacity>
-      </View>
+
 
       {serverError ? (
         <Typography variant="caption" style={styles.serverError}>
@@ -188,6 +182,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
         loading={isLoading}
         disabled={isLoading}
       />
+
+      <View style={styles.forgotPasswordContainer}>
+        <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
+          <Typography variant="caption" style={styles.forgotPasswordLink}>
+            Olvidaste tu contrasena?
+          </Typography>
+        </TouchableOpacity>
+      </View>
 
       <Spacer size={16} />
 
