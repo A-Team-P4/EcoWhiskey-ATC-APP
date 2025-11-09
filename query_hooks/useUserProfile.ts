@@ -73,7 +73,11 @@ export const useCurrentUser = () => {
   return useQuery<User>({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: async () => {
+      console.log('🔍 useCurrentUser: Fetching from /users/me endpoint');
       const user = await getCurrentUser();
+      console.log('✅ useCurrentUser: User data received:', user);
+      console.log('📸 useCurrentUser: Photo field:', user.photo?.substring(0, 50) + '...');
+      console.log('📸 useCurrentUser: Photo type:', typeof user.photo);
       await persistUser(user);
       return user;
     },

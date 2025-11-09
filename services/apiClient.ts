@@ -84,8 +84,8 @@ apiClient.interceptors.response.use(
 
     // Handle common errors
     if (error.response?.status === 401) {
-      // Token expired - you might want to redirect to login
-      AsyncStorage.removeItem('@auth_token');
+      // Token expired or invalid - clear all auth data
+      AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
     }
 
     return Promise.reject(error);
@@ -312,6 +312,29 @@ export const getSessionSummary = async (sessionId: string) => {
     console.error('❌ [SCORES API] Error response:', error.response?.data);
     throw error;
   }
+};
+
+// METAR data interface
+export interface METARData {
+  icaoId: string;
+  temp: number;
+  dewp: number;
+  wdir: number;
+  wspd: number;
+  visib: string;
+  altim: number;
+  rawOb: string;
+  clouds?: Array<{
+    cover: string;
+    base: number;
+  }>;
+  fltCat: string;
+}
+
+// Fetch current METAR data via backend proxy
+export const fetchMETARData = async (icaoCode: string): Promise<METARData> => {
+  const response = await apiClient.get<METARData>(`/metar/${icaoCode}`);
+  return response.data;
 };
 
 export default apiClient;
