@@ -4,7 +4,7 @@ import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
-import { AIRPORTS, CONDITIONS, OBJECTIVES, VISIBILITY } from '@/utils/dropDowns';
+import { AIRPORTS, CONDITIONS, SCENARIOS, VISIBILITY } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -84,7 +84,7 @@ export default function FlightContextScreen() {
         ...meteo,
         wind,
       },
-      objectives: objective ? [objective] : [],
+      scenario_id: objective ,
     };
 
     console.log('📤 Sending training config:', trainingConfig);
@@ -136,9 +136,9 @@ export default function FlightContextScreen() {
 
             {/* Objective Single-Select Dropdown */}
             <Dropdown
-              label="Objetivo"
-              placeholder="Seleccione un objetivo"
-              options={OBJECTIVES}
+              label="Escenario"
+              placeholder="Seleccione un escenario"
+              options={SCENARIOS}
               value={objective}
               onSelect={setObjective}
              

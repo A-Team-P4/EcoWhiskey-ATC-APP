@@ -66,7 +66,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="UserProfileTab"
+        name="ScoresTab"
         options={{
           title: "Score",
           tabBarIcon: ({ color, focused }) => (
@@ -75,6 +75,23 @@ export default function TabLayout() {
               <Icon
                 type="MaterialIcons"
                 name="scoreboard"
+                size={24}
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="UserProfileTab"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabContainer}>
+              {focused && <View style={styles.activeIndicator} />}
+              <Icon
+                type="MaterialIcons"
+                name="person"
                 size={24}
                 color={color}
               />

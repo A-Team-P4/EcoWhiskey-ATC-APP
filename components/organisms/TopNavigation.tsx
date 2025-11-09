@@ -12,6 +12,7 @@ import { Avatar } from 'react-native-paper';
 
 import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
+import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
 import { useGetMe } from '@/query_hooks/useGetMe';
 import { usePathname, useRouter } from 'expo-router';
 
@@ -20,12 +21,13 @@ export const TopNavigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
+  const { requestNavigation } = useNavigationWarning();
 
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const isMobile = width < 768;
   const isATCActive = pathname.includes('ATCTrainingTab');
-  const isProfileActive = pathname.includes('UserProfileTab');
+  const isScoresActive = pathname.includes('ScoresTab');
 
   const getInitials = () => {
     if (!user?.firstName || !user?.lastName) return '?';
@@ -51,17 +53,30 @@ export const TopNavigation: React.FC = () => {
   };
 
   const handleATCPress = () => {
-    router.push('/(tabs)/ATCTrainingTab');
+    requestNavigation(() => {
+      router.push('/(tabs)/ATCTrainingTab');
+    });
   };
 
   const handleProfilePress = () => {
     setShowAccountMenu(false);
-    router.push('/(tabs)/UserProfileTab');
+    requestNavigation(() => {
+      router.push('/(tabs)/UserProfileTab');
+    });
+  };
+
+  const handleScoresPress = () => {
+    setShowAccountMenu(false);
+    requestNavigation(() => {
+      router.push('/(tabs)/ScoresTab');
+    });
   };
 
   const handleHistoryPress = () => {
     setShowAccountMenu(false);
-    router.push('/(tabs)/TrainingHistoryTab');
+    requestNavigation(() => {
+      router.push('/(tabs)/TrainingHistoryTab');
+    });
   };
 
   return (
@@ -159,11 +174,11 @@ export const TopNavigation: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleProfilePress}
+              onPress={handleScoresPress}
               activeOpacity={0.7}
               style={[
                 styles.webTabButton,
-                { borderBottomColor: isProfileActive ? '#2196F3' : 'transparent' },
+                { borderBottomColor: isScoresActive ? '#2196F3' : 'transparent' },
               ]}
             >
               <View style={styles.webTabContent}>
@@ -171,14 +186,14 @@ export const TopNavigation: React.FC = () => {
                   type='MaterialIcons'
                   name='scoreboard'
                   size={20}
-                  color={isProfileActive ? '#2196F3' : '#666'}
+                  color={isScoresActive ? '#2196F3' : '#666'}
                 />
                 <ThemedText
                   style={[
                     styles.webTabLabel,
                     {
-                      fontWeight: isProfileActive ? '600' : '400',
-                      color: isProfileActive ? '#2196F3' : '#666',
+                      fontWeight: isScoresActive ? '600' : '400',
+                      color: isScoresActive ? '#2196F3' : '#666',
                     },
                   ]}
                 >

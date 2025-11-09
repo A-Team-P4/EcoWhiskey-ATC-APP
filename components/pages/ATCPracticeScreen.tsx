@@ -1,10 +1,12 @@
 import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
+import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { sendAudioForAnalysis } from '@/services/apiClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Modal, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Switch } from 'react-native-paper';
@@ -21,6 +23,8 @@ export default function AudioInteractionScreen() {
   const playerStatus = useAudioPlayerStatus(audioPlayer);
 
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const navigation = useNavigation();
+  const { setShouldWarnBeforeNavigation, showWarningModal, confirmNavigation, cancelNavigation, setPendingNavigationFn } = useNavigationWarning();
 
   const [feedbackText, setFeedbackText] = useState('Inicie comunicación con la torre de control. Presione el botón PTT para comenzar.');
   const [controllerText, setControllerText] = useState('');
@@ -36,6 +40,7 @@ export default function AudioInteractionScreen() {
   const [silenceWarningShown, setSilenceWarningShown] = useState(false);
   const drawerAnimation = React.useRef(new Animated.Value(0)).current;
   const silenceCheckTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingNavigationAction = React.useRef<any>(null);
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   // Settings drawer animation
@@ -94,6 +99,69 @@ export default function AudioInteractionScreen() {
       }
     })();
   }, []);
+
+  // Enable/disable navigation warning based on session
+  useEffect(() => {
+    setShouldWarnBeforeNavigation(!!sessionId);
+
+    return () => {
+      setShouldWarnBeforeNavigation(false);
+    };
+  }, [sessionId, setShouldWarnBeforeNavigation]);
+
+  // Handle back button navigation (beforeRemove event)
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const beforeRemoveListener = (e: any) => {
+      if (!sessionId) return;
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      // Store the navigation action to execute later if user confirms
+      pendingNavigationAction.current = e.data.action;
+
+      // Create the function that will execute when user confirms
+      const handleNavigation = async () => {
+        // Clean up session
+        try {
+          await AsyncStorage.removeItem(`@session_${sessionId}`);
+          console.log('🗑️ Session removed from storage:', sessionId);
+        } catch (error) {
+          console.error('Error removing session from storage:', error);
+        }
+
+        // Execute the stored navigation action
+        if (pendingNavigationAction.current) {
+          navigation.dispatch(pendingNavigationAction.current);
+          pendingNavigationAction.current = null;
+        }
+      };
+
+      // Directly set the pending navigation and show modal
+      setPendingNavigationFn(handleNavigation);
+    };
+
+    // Add the listener
+    const unsubscribe = navigation.addListener('beforeRemove', beforeRemoveListener);
+
+    // Cleanup listener on unmount
+    return unsubscribe;
+  }, [sessionId, navigation, setPendingNavigationFn]);
+
+  const handleConfirmExitWrapper = () => {
+    // Confirm navigation - this will execute the pending navigation function
+    confirmNavigation();
+  };
+
+  const handleCancelExitWrapper = () => {
+    // Cancel navigation
+    cancelNavigation();
+
+    // Clear pending back button navigation action if any
+    pendingNavigationAction.current = null;
+  };
 
   const startRecording = async () => {
     try {
@@ -212,7 +280,7 @@ export default function AudioInteractionScreen() {
       setFeedbackText('');
       setControllerText('');
 
-      const formattedFrequency = frequency.toFixed(2);
+      const formattedFrequency = frequency.toFixed(3);
       const response = await sendAudioForAnalysis(audioUri, sessionId, formattedFrequency);
 
       console.log('📥 Backend response:', response);
@@ -236,6 +304,7 @@ export default function AudioInteractionScreen() {
 
     } catch (error: any) {
       setIsLoadingResponse(false);
+      setRecordedAudioUri(null); // Clear recorded audio to show PTT button again
       console.error('Failed to send audio', error);
 
       if (error.response?.status === 401) {
@@ -368,6 +437,45 @@ export default function AudioInteractionScreen() {
               <TouchableOpacity style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: "#2196F3" }} onPress={handleSaveFrequency}>
                 <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
                   Guardar
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Exit confirmation modal */}
+      <Modal animationType="fade" transparent={true} visible={showWarningModal} onRequestClose={handleCancelExitWrapper}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 10 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Icon type="MaterialIcons" name="warning" color="#FF9800" size={48} />
+            </View>
+
+            <ThemedText style={{ fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#000' }}>
+              Terminar sesión
+            </ThemedText>
+
+            <ThemedText style={{ fontSize: 15, textAlign: 'center', marginBottom: 24, color: '#666', lineHeight: 22 }}>
+              Al salir de esta pantalla, tu sesión de práctica será terminada. ¿Deseas continuar?
+            </ThemedText>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#e0e0e0' }}
+                onPress={handleCancelExitWrapper}
+              >
+                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#000' }}>
+                  Cancelar
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#EF4444' }}
+                onPress={handleConfirmExitWrapper}
+              >
+                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+                  Salir
                 </ThemedText>
               </TouchableOpacity>
             </View>

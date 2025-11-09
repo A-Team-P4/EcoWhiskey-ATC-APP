@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import '../global.css';
 import { queryClient } from '../lib/queryClient';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { NavigationWarningProvider } from '@/contexts/NavigationWarningContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -23,15 +24,19 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={paperTheme}>
         <QueryClientProvider client={queryClient}>
-          <ProtectedRoute>
-            <Stack>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="register" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
-            </Stack>
-          </ProtectedRoute>
-          <StatusBar style="auto" />
+          <NavigationWarningProvider>
+            <ProtectedRoute>
+              <Stack>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="register" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
+                <Stack.Screen name="phase-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="session-detail" options={{ headerShown: false }} />
+              </Stack>
+            </ProtectedRoute>
+            <StatusBar style="auto" />
+          </NavigationWarningProvider>
         </QueryClientProvider>
       </PaperProvider>
     </GestureHandlerRootView>
