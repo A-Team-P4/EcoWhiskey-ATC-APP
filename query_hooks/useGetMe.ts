@@ -18,19 +18,42 @@ export const useGetUserById = (userId: number | string) => {
  */
 export const useGetMe = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
-    const loadUserId = async () => {
-      const storedUserId = await AsyncStorage.getItem('@user_id');
-      setUserId(storedUserId);
+    const loadAuthData = async () => {
+      const [storedUserId, token] = await Promise.all([
+        AsyncStorage.getItem('@user_id'),
+        AsyncStorage.getItem('@auth_token')
+      ]);
+
+      // Only set userId if we have a valid token
+      if (token && storedUserId) {
+        setUserId(storedUserId);
+        setHasToken(true);
+      } else {
+        // Clear stale user data if token is missing
+        if (storedUserId && !token) {
+          await AsyncStorage.multiRemove(['@user_id', '@auth_user']);
+        }
+        setUserId(null);
+        setHasToken(false);
+      }
     };
-    loadUserId();
+    loadAuthData();
   }, []);
 
   return useQuery({
     queryKey: ['user', userId],
-    queryFn: () => getUserById(userId!),
-    enabled: !!userId, // Only fetch if userId exists
+    queryFn: async () => {
+      console.log('🔍 useGetMe: Fetching user data for userId:', userId);
+      const userData = await getUserById(userId!);
+      console.log('✅ useGetMe: User data received:', userData);
+      console.log('📸 useGetMe: Photo field:', userData.photo);
+      console.log('📸 useGetMe: Photo type:', typeof userData.photo);
+      return userData;
+    },
+    enabled: !!userId && hasToken, // Only fetch if userId exists AND we have a valid token
     staleTime: 10 * 60 * 1000, // 10 minutes - user data doesn't change often
   });
 };

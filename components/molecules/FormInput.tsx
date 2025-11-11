@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { HelperText, TextInput } from 'react-native-paper';
+import { StyleSheet, Text, View } from 'react-native';
+import { TextInput } from 'react-native-paper';
 
 import { Icon } from '../atoms/Icon';
 
@@ -105,15 +105,23 @@ export const FormInput: React.FC<FormInputProps> = ({
         right={
           secureTextEntry ? (
             <TextInput.Icon
-              icon={showPassword ? 'eye-off' : 'eye'}
+              icon={() => (
+                <Icon
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  type="MaterialCommunityIcons"
+                  size={22}
+                  color="#6B7280"
+                />
+              )}
               onPress={() => setShowPassword(!showPassword)}
+              forceTextInputFocus={false}
             />
           ) : undefined
         }
       />
-      <HelperText type="error" visible={!!error} style={styles.helperText}>
-        {error || ' '}
-      </HelperText>
+      <View style={styles.helperTextContainer}>
+        {error && <Text style={styles.helperText}>{error}</Text>}
+      </View>
     </View>
   );
 };
@@ -142,8 +150,13 @@ const styles = StyleSheet.create({
   inputOutlineError: {
     borderColor: '#FF3B30',
   },
-  helperText: {
-    paddingHorizontal: 4,
+  helperTextContainer: {
     minHeight: 20,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#FF3B30',
   },
 });

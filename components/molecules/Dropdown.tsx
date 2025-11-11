@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FlatList, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Divider, HelperText, Surface, TextInput } from 'react-native-paper';
+import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Divider, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
 import { Typography } from '../atoms/Typography';
 
@@ -22,6 +22,7 @@ interface DropdownProps {
   leftIconType?: React.ComponentProps<typeof Icon>['type'];
   leftIconColor?: string;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -36,7 +37,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   leftIconName,
   leftIconType = 'MaterialIcons',
   leftIconColor,
-  disabled = false
+  disabled = false,
+  compact = false
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -93,7 +95,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const leftIconColorResolved = leftIconColor ?? iconColor;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, compact && styles.containerCompact]}>
       <TouchableOpacity onPress={openDropdown} disabled={disabled}>
         <TextInput
           theme={customTheme}
@@ -101,17 +103,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
           value={displayValue}
           style={[
             styles.input,
+            compact && styles.inputCompact,
             isFocused && styles.inputFocused,
             disabled && styles.inputDisabled
           ]}
-          contentStyle={styles.inputContent}
+          contentStyle={[styles.inputContent, compact && styles.inputContentCompact]}
           outlineStyle={[
             styles.inputOutline,
+            compact && styles.inputOutlineCompact,
             isFocused && styles.inputOutlineFocused,
             error && styles.inputOutlineError
           ]}
           error={!!error}
           mode="outlined"
+          dense={compact}
           left={
             leftIconName
               ? (
@@ -150,10 +155,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
           }
         />
       </TouchableOpacity>
-      
-      <HelperText type="error" visible={!!error} style={styles.helperText}>
-        {error || ' '}
-      </HelperText>
+
+      <View style={styles.helperTextContainer}>
+        {error && <Text style={styles.helperText}>{error}</Text>}
+      </View>
 
       <Modal
         visible={isVisible}
@@ -207,8 +212,14 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 8,
   },
+  containerCompact: {
+    marginBottom: 4,
+  },
   input: {
     backgroundColor: '#FFFFFF',
+  },
+  inputCompact: {
+    height: 46,
   },
   inputFocused: {
     // backgroundColor: '#FFFFFF', // Uncomment if you want focused background
@@ -219,9 +230,16 @@ const styles = StyleSheet.create({
   inputContent: {
     color: '#1C1C1E',
   },
+  inputContentCompact: {
+    paddingVertical: 6,
+    fontSize: 14,
+  },
   inputOutline: {
     borderRadius: 12,
     // borderColor: '#E5E5EA', // Uncomment if you want default border color
+  },
+  inputOutlineCompact: {
+    borderRadius: 8,
   },
   inputOutlineFocused: {
     borderColor: '#2196F3',
@@ -230,9 +248,14 @@ const styles = StyleSheet.create({
   inputOutlineError: {
     borderColor: '#FF3B30',
   },
-  helperText: {
-    paddingHorizontal: 4,
+  helperTextContainer: {
     minHeight: 20,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#FF3B30',
   },
   modalOverlay: {
     flex: 1,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FlatList, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Checkbox, Divider, HelperText, Surface, TextInput } from 'react-native-paper';
+import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Checkbox, Divider, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
 import { Typography } from '../atoms/Typography';
 
@@ -128,9 +128,9 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         />
       </TouchableOpacity>
 
-      <HelperText type="error" visible={!!error} style={styles.helperText}>
-        {error || ' '}
-      </HelperText>
+      <View style={styles.helperTextContainer}>
+        {error && <Text style={styles.helperText}>{error}</Text>}
+      </View>
 
       <Modal
         visible={isVisible}
@@ -240,9 +240,14 @@ const styles = StyleSheet.create({
   inputOutlineError: {
     borderColor: '#FF3B30',
   },
-  helperText: {
-    paddingHorizontal: 4,
+  helperTextContainer: {
     minHeight: 20,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#FF3B30',
   },
   modalOverlay: {
     flex: 1,

@@ -4,7 +4,6 @@ import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 
 import { Icon } from "@/components/atoms/Icon";
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function TabLayout() {
   const { width } = useWindowDimensions();
@@ -26,10 +25,14 @@ export default function TabLayout() {
           paddingTop: 0,
           paddingHorizontal: 16,
           elevation: 20,
-          shadowColor: "#000000",
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
+          ...(Platform.OS === 'web' ? {
+            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+          } : {
+            shadowColor: "#000000",
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+          }),
         } : {
           display: 'none',
         },
@@ -49,7 +52,7 @@ export default function TabLayout() {
               <Icon
                 type="FontAwesome5"
                 name="plane-departure"
-                size={24}
+                size={20}
                 color={color}
               />
             </View>
@@ -60,13 +63,21 @@ export default function TabLayout() {
         name="TrainingHistoryTab"
         options={{
           title: "Historial",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="clock.fill" color={color} />
+         tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabContainer}>
+              {focused && <View style={styles.activeIndicator} />}
+              <Icon
+                type="FontAwesome5"
+                name="history"
+                size={20}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="UserProfileTab"
+        name="ScoresTab"
         options={{
           title: "Score",
           tabBarIcon: ({ color, focused }) => (
@@ -75,13 +86,14 @@ export default function TabLayout() {
               <Icon
                 type="MaterialIcons"
                 name="scoreboard"
-                size={24}
+                size={23}
                 color={color}
               />
             </View>
           ),
         }}
       />
+
     </Tabs>
   );
 }

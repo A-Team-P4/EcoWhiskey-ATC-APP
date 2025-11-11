@@ -84,8 +84,8 @@ apiClient.interceptors.response.use(
 
     // Handle common errors
     if (error.response?.status === 401) {
-      // Token expired - you might want to redirect to login
-      AsyncStorage.removeItem('@auth_token');
+      // Token expired or invalid - clear all auth data
+      AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
     }
 
     return Promise.reject(error);
@@ -199,6 +199,141 @@ export const createTrainingContext = async (config: TrainingConfiguration) => {
 
 export const getTrainingContextHistory = async (userId: string): Promise<TrainingSession[]> => {
   const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
+  return response.data;
+};
+
+// Get scores for a specific training session
+export const getSessionScores = async (sessionId: string) => {
+  console.log('📊 [SCORES API] Requesting session scores');
+  console.log('📊 [SCORES API] Session ID:', sessionId);
+  console.log('📊 [SCORES API] Endpoint:', `/scores/session/${sessionId}`);
+  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}/scores/session/${sessionId}`);
+
+  try {
+    const response = await apiClient.get(`/scores/session/${sessionId}`);
+
+    console.log('✅ [SCORES API] Session scores response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching session scores');
+    console.error('❌ [SCORES API] Session ID:', sessionId);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// Get scores for a specific phase across all sessions
+export const getPhaseScores = async (phaseId: string) => {
+  console.log('📊 [SCORES API] Requesting phase scores');
+  console.log('📊 [SCORES API] Phase ID:', phaseId);
+  console.log('📊 [SCORES API] Endpoint:', `/scores/phase/${phaseId}`);
+  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}/scores/phase/${phaseId}`);
+
+  try {
+    const response = await apiClient.get(`/scores/phase/${phaseId}`);
+
+    console.log('✅ [SCORES API] Phase scores response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Phase ID:', phaseId);
+    console.log('✅ [SCORES API] Average Score:', response.data?.average_score);
+    console.log('✅ [SCORES API] Total Scores:', response.data?.total_scores);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching phase scores');
+    console.error('❌ [SCORES API] Phase ID:', phaseId);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// Get phase summary with LLM-generated feedback
+export const getPhaseSummary = async (phaseId: string) => {
+  console.log('🤖 [SCORES API] Requesting phase summary with LLM analysis');
+  console.log('🤖 [SCORES API] Phase ID:', phaseId);
+  console.log('🤖 [SCORES API] Endpoint:', `/scores/phase/${phaseId}/summary`);
+  console.log('🤖 [SCORES API] Full URL:', `${API_BASE_URL}/scores/phase/${phaseId}/summary`);
+
+  try {
+    const response = await apiClient.get(`/scores/phase/${phaseId}/summary`);
+
+    console.log('✅ [SCORES API] Phase summary response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Phase ID:', phaseId);
+    console.log('✅ [SCORES API] Average Score:', response.data?.average_score);
+    console.log('✅ [SCORES API] Total Scores:', response.data?.total_scores);
+    console.log('✅ [SCORES API] Summary length:', response.data?.summary?.length);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching phase summary');
+    console.error('❌ [SCORES API] Phase ID:', phaseId);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// Get session summary with LLM-generated feedback
+export const getSessionSummary = async (sessionId: string) => {
+  console.log('🤖 [SCORES API] Requesting session summary with LLM analysis');
+  console.log('🤖 [SCORES API] Session ID:', sessionId);
+  console.log('🤖 [SCORES API] Endpoint:', `/scores/session/${sessionId}/summary`);
+  console.log('🤖 [SCORES API] Full URL:', `${API_BASE_URL}/scores/session/${sessionId}/summary`);
+
+  try {
+    const response = await apiClient.get(`/scores/session/${sessionId}/summary`);
+
+    console.log('✅ [SCORES API] Session summary response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Session ID:', sessionId);
+    console.log('✅ [SCORES API] Overall Average:', response.data?.overall_average);
+    console.log('✅ [SCORES API] Total Evaluations:', response.data?.total_evaluations);
+    console.log('✅ [SCORES API] Phases Count:', response.data?.phases?.length);
+    console.log('✅ [SCORES API] Summary length:', response.data?.summary?.length);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching session summary');
+    console.error('❌ [SCORES API] Session ID:', sessionId);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// METAR data interface
+export interface METARData {
+  icaoId: string;
+  temp: number;
+  dewp: number;
+  wdir: number;
+  wspd: number;
+  visib: string;
+  altim: number;
+  rawOb: string;
+  clouds?: Array<{
+    cover: string;
+    base: number;
+  }>;
+  fltCat: string;
+}
+
+// Fetch current METAR data via backend proxy
+export const fetchMETARData = async (icaoCode: string): Promise<METARData> => {
+  const response = await apiClient.get<METARData>(`/metar/${icaoCode}`);
   return response.data;
 };
 

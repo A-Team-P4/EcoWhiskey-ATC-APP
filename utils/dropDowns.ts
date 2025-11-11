@@ -19,8 +19,8 @@ export const AIRPORTS = [
 ];
 
 export const CONDITIONS = [
-  { label: 'VMC - Visual Meteorological Conditions', value: 'VMC' },
-  { label: 'IMC - Instrument Meteorological Conditions', value: 'IMC' },
+  { label: 'VMC', value: 'VMC' },
+  { label: 'IMC', value: 'IMC' },
 ];
 
 export const VISIBILITY = [
@@ -32,10 +32,10 @@ export const VISIBILITY = [
   { label: 'Menos de 1 km', value: '<1km' },
 ];
 
-export const OBJECTIVES = [
+export const SCENARIOS = [
   //{ label: 'Practicar taxi', value: 'practice_taxi' },
-  { label: 'Énfasis en fraseología', value: 'phraseology_focus' },
-  { label: 'Practica colación', value: 'readBack' },
+ // { label: 'Énfasis en fraseología', value: 'phraseology_focus' },
+  { label: 'Vuelo completo', value: 'mrpv_full_flight' },
   //{ label: 'Uso correcto de altímetro', value: 'altimeter_use' },
   //{ label: 'Tráfico de circuito', value: 'circuit_traffic' },
   //{ label: 'Entrada y salida de aeródromo controlado', value: 'controlled_airfield_ops' },

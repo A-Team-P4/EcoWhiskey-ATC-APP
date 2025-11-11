@@ -18,12 +18,8 @@ export const useLogin = () => {
 
           const decoded = decodeJWT<JWTPayload>(data.accessToken);
           if (decoded?.user?.id) {
-  
             await AsyncStorage.setItem('@user_id', decoded.user.id.toString());
-
-          
             queryClient.invalidateQueries({ queryKey: ['user', decoded.user.id] });
-
             console.log('✅ User ID extracted:', decoded.user.id);
           }
         } catch (error) {

@@ -2,7 +2,7 @@ import { LoginCredentials } from '@/interfaces/user';
 import { requestPasswordReset } from '@/services/apiClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, Modal, Platform, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
@@ -150,7 +150,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       />
 
       <FormInput
-        label="Contrasena"
+        label="Contraseña"
         value={password}
         onChangeText={(value) => {
           setPassword(value);
