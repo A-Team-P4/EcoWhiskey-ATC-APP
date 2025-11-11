@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   changeUserPassword,
@@ -21,6 +21,7 @@ import {
 } from '../interfaces/user';
 
 const USER_STORAGE_KEY = '@auth_user';
+const AUTH_TOKEN_STORAGE_KEY = '@auth_token';
 
 export const CURRENT_USER_QUERY_KEY = ['user', 'me'] as const;
 export const USER_QUERY_KEY = (userId: string) => ['user', userId] as const;
@@ -66,9 +67,40 @@ const useHydrateCurrentUserFromStorage = ({ queryClient }: HydrateFromStorageCon
   }, [queryClient]);
 };
 
+const useHasAuthToken = () => {
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+        if (isMounted) {
+          setHasToken(!!token);
+        }
+      } catch (error) {
+        console.warn('Failed to read auth token', error);
+        if (isMounted) {
+          setHasToken(false);
+        }
+      }
+    };
+
+    checkToken();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return hasToken === true;
+};
+
 export const useCurrentUser = () => {
   const queryClient = useQueryClient();
   useHydrateCurrentUserFromStorage({ queryClient });
+  const hasAuthToken = useHasAuthToken();
 
   return useQuery<User>({
     queryKey: CURRENT_USER_QUERY_KEY,
@@ -81,6 +113,7 @@ export const useCurrentUser = () => {
       await persistUser(user);
       return user;
     },
+    enabled: hasAuthToken,
   });
 };
 
