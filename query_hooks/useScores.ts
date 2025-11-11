@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { PhaseScoresResponse, PhaseSummaryResponse, SessionScoresResponse, SessionSummaryResponse } from '../interfaces/training';
-import { getPhaseScores, getPhaseSummary, getSessionScores, getSessionSummary } from '../services/apiClient';
+import { AllPhasesScoresResponse, PhaseScoresResponse, PhaseSummaryResponse, SessionScoresResponse, SessionSummaryResponse } from '../interfaces/training';
+import { getAllPhasesScores, getPhaseScores, getPhaseSummary, getSessionScores, getSessionSummary } from '../services/apiClient';
 
 export const SESSION_SCORES_QUERY_KEY = (sessionId: string) =>
   ['scores', 'session', sessionId] as const;
@@ -40,4 +40,13 @@ export const usePhaseSummary = (phaseId?: string) =>
     queryKey: phaseId ? PHASE_SUMMARY_QUERY_KEY(phaseId) : ['scores', 'phase', 'summary'],
     queryFn: () => getPhaseSummary(phaseId as string),
     enabled: Boolean(phaseId),
+  });
+
+export const ALL_PHASES_SCORES_QUERY_KEY = (phaseIds?: string[]) =>
+  ['scores', 'phases', 'all', phaseIds?.join(',') || 'all'] as const;
+
+export const useAllPhasesScores = (phaseIds?: string[]) =>
+  useQuery<AllPhasesScoresResponse>({
+    queryKey: ALL_PHASES_SCORES_QUERY_KEY(phaseIds),
+    queryFn: () => getAllPhasesScores(phaseIds),
   });

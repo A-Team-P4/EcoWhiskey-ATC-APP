@@ -255,6 +255,37 @@ export const getPhaseScores = async (phaseId: string) => {
   }
 };
 
+// Get scores for all phases in a single request
+export const getAllPhasesScores = async (phaseIds?: string[]) => {
+  console.log('📊 [SCORES API] Requesting all phases scores');
+  console.log('📊 [SCORES API] Phase IDs:', phaseIds);
+
+  const endpoint = phaseIds && phaseIds.length > 0
+    ? `/scores/phases?phase_ids=${phaseIds.join(',')}`
+    : '/scores/phases';
+
+  console.log('📊 [SCORES API] Endpoint:', endpoint);
+  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
+
+  try {
+    const response = await apiClient.get(endpoint);
+
+    console.log('✅ [SCORES API] All phases scores response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching all phases scores');
+    console.error('❌ [SCORES API] Phase IDs:', phaseIds);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
 // Get phase summary with LLM-generated feedback
 export const getPhaseSummary = async (phaseId: string) => {
   console.log('🤖 [SCORES API] Requesting phase summary with LLM analysis');
