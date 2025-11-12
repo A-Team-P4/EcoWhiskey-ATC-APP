@@ -1,11 +1,11 @@
 export const AIRPORTS = [
   // International Airports
- // { label: 'MROC - Juan Santamaría Intl. (San José / Alajuela)', value: 'MROC' },
+  // { label: 'MROC - Juan Santamaría Intl. (San José / Alajuela)', value: 'MROC' },
   //{ label: 'MRLB - Daniel Oduber Intl. (Liberia)', value: 'MRLB' },
   //{ label: 'MRLM - Limón Intl. (Limón)', value: 'MRLM' },
   //{ label: 'MRPM - Palmar Sur (Osa)', value: 'MRPM' },
   // Domestic Airports
-  { label: 'MRPV - Tobías Bolaños Intl', value: 'MRPV' },
+  { label: "MRPV - Tobías Bolaños Intl", value: "MRPV" },
   // { label: 'MRSV - San Vito', value: 'MRSV' },
   // { label: 'MRNS - Nosara', value: 'MRNS' },
   // { label: 'MRTR - Tambor', value: 'MRTR' },
@@ -19,23 +19,25 @@ export const AIRPORTS = [
 ];
 
 export const CONDITIONS = [
-  { label: 'VMC', value: 'VMC' },
-  { label: 'IMC', value: 'IMC' },
+  { label: "VMC", value: "VMC" },
+  { label: "IMC", value: "IMC" },
 ];
 
 export const VISIBILITY = [
-  { label: 'Más de 10 km', value: '>10km' },
-  { label: '10 km', value: '10km' },
-  { label: '5 km', value: '5km' },
-  { label: '3 km', value: '3km' },
-  { label: '1 km', value: '1km' },
-  { label: 'Menos de 1 km', value: '<1km' },
+  { label: "Más de 10 km", value: ">10km" },
+  { label: "10 km", value: "10km" },
+  { label: "5 km", value: "5km" },
+  { label: "3 km", value: "3km" },
+  { label: "1 km", value: "1km" },
+  { label: "Menos de 1 km", value: "<1km" },
 ];
 
 export const SCENARIOS = [
   //{ label: 'Practicar taxi', value: 'practice_taxi' },
- // { label: 'Énfasis en fraseología', value: 'phraseology_focus' },
-  { label: 'Vuelo completo', value: 'mrpv_full_flight' },
+  // { label: 'Énfasis en fraseología', value: 'phraseology_focus' },
+  { label: "MRVP - Zona Echo", value: "mrpv_zone_echo" },
+  { label: "Zona Echo - MRVP", value: "zone_echo_mrpv" },
+  { label: "MRVP a MRVP - Vuelo completo", value: "mrpv_full_flight" },
   //{ label: 'Uso correcto de altímetro', value: 'altimeter_use' },
   //{ label: 'Tráfico de circuito', value: 'circuit_traffic' },
   //{ label: 'Entrada y salida de aeródromo controlado', value: 'controlled_airfield_ops' },

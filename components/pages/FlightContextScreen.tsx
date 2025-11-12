@@ -123,7 +123,8 @@ export default function FlightContextScreen() {
 
     setIsFetchingMETAR(true);
     try {
-      const metarData = await fetchMETARData(departure);
+      const metarData = await fetchMETARData('MROC');
+      //const metarData = await fetchMETARData(departure);
 
       console.log('📡 Raw METAR Data:', metarData);
       console.log('📡 Flight Category (fltCat):', metarData.fltCat);
@@ -193,8 +194,17 @@ export default function FlightContextScreen() {
       ? `${meteo.windDirection}/${meteo.windSpeed}`
       : '';
 
-    // Construct route as "departure-arrival"
-    const route = departure && arrival ? `${departure}-${arrival}` : '';
+    // Construct route - fixed for specific scenarios, otherwise use departure-arrival
+    let route = '';
+    if (objective === 'mrpv_full_flight') {
+      route = 'MRPV-MRPV';
+    } else if (objective === 'mrpv_zone_echo') {
+      route = 'MRPV-mrpv_zone_echo';
+    } else if (objective === 'zone_echo_mrpv') {
+      route = 'zone_echo_mrpv-MRPV';
+    } else {
+      route = departure && arrival ? `${departure}-${arrival}` : '';
+    }
 
     // Validate required fields
     if (!objective) {
@@ -252,14 +262,14 @@ export default function FlightContextScreen() {
 
           {/* Configuration Header */}
           <ThemedText style={{ fontSize: 24, fontWeight: '700', marginBottom: 16 }}>
-            Configuración de Vuelo
+            Configuración de Práctica
           </ThemedText>
 
           {/* Scenario & Route Card */}
           <View style={styles.card}>
             {/* Objective */}
             <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Escenario</ThemedText>
+              <ThemedText style={styles.sectionTitle}>Selecciona un escenario</ThemedText>
               <Dropdown
                 label="Escenario"
                 placeholder="Seleccione un escenario"
@@ -267,39 +277,104 @@ export default function FlightContextScreen() {
                 value={objective}
                 onSelect={setObjective}
               />
-            </View>
 
-            {/* Route */}
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
-              <View style={{ flexDirection: isWeb ? 'row' : 'column', gap: isWeb ? 12 : 0 }}>
-                <View style={{ flex: 1 }}>
-                  <Dropdown
-                    label="Salida"
-                    placeholder="Aeropuerto de salida"
-                    options={AIRPORTS}
-                    value={departure}
-                    onSelect={setDeparture}
-                  />
+              {/* Helper text for mrpv_full_flight scenario */}
+              {objective === 'mrpv_full_flight' && (
+                <View style={styles.helperBox}>
+                  <ThemedText style={styles.helperText}>
+                    Este escenario simula un vuelo completo que parte del aeropuerto de Tobías Bolaño (MRPV), se dirige hacia la Zona Echo y luego regresa a MRPV. Es ideal para practicar todas las fases del vuelo, desde el despegue hasta el aterrizaje.
+                  </ThemedText>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Dropdown
-                    label="Llegada"
-                    placeholder="Aeropuerto de llegada"
-                    options={AIRPORTS}
-                    value={arrival}
-                    onSelect={setArrival}
-                  />
+              )}
+
+              {/* Helper text for mrpv_zone_echo scenario */}
+              {objective === 'mrpv_zone_echo' && (
+                <View style={styles.helperBox}>
+                  <ThemedText style={styles.helperText}>
+                    Este escenario simula un vuelo desde el aeropuerto de Tobías Bolaños (MRPV) hacia la Zona Echo. Es ideal para practicar el despegue, comunicaciones iniciales y salida del espacio aéreo controlado.
+                  </ThemedText>
                 </View>
-              </View>
-              {departure && arrival && (
-                <View style={styles.infoBox}>
-                  <ThemedText style={styles.infoText}>
-                    {departure} → {arrival}
+              )}
+
+              {/* Helper text for zone_echo_mrpv scenario */}
+              {objective === 'zone_echo_mrpv' && (
+                <View style={styles.helperBox}>
+                  <ThemedText style={styles.helperText}>
+                    Este escenario simula un vuelo de regreso desde la Zona Echo hacia el aeropuerto de Tobías Bolaños (MRPV). Es ideal para practicar la entrada al espacio aéreo controlado, aproximación y aterrizaje.
                   </ThemedText>
                 </View>
               )}
             </View>
+
+            {/* Route - Only show if NOT mrpv_full_flight or mrpv_zone_echo or zone_echo_mrpv */}
+            {objective !== 'mrpv_full_flight' && objective !== 'mrpv_zone_echo' && objective !== 'zone_echo_mrpv' && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
+                <View style={{ flexDirection: isWeb ? 'row' : 'column', gap: isWeb ? 12 : 0 }}>
+                  <View style={{ flex: 1 }}>
+                    <Dropdown
+                      label="Salida"
+                      placeholder="Aeropuerto de salida"
+                      options={AIRPORTS}
+                      value={departure}
+                      onSelect={setDeparture}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Dropdown
+                      label="Llegada"
+                      placeholder="Aeropuerto de llegada"
+                      options={AIRPORTS}
+                      value={arrival}
+                      onSelect={setArrival}
+                    />
+                  </View>
+                </View>
+                {departure && arrival && (
+                  <View style={styles.infoBox}>
+                    <ThemedText style={styles.infoText}>
+                      {departure} → {arrival}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Fixed route display for mrpv_full_flight */}
+            {objective === 'mrpv_full_flight' && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
+                <View style={styles.infoBox}>
+                  <ThemedText style={styles.infoText}>
+                    MRPV → Zona Echo → MRPV
+                  </ThemedText>
+                </View>
+              </View>
+            )}
+
+            {/* Fixed route display for mrpv_zone_echo */}
+            {objective === 'mrpv_zone_echo' && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
+                <View style={styles.infoBox}>
+                  <ThemedText style={styles.infoText}>
+                    MRPV → Zona Echo
+                  </ThemedText>
+                </View>
+              </View>
+            )}
+
+            {/* Fixed route display for zone_echo_mrpv */}
+            {objective === 'zone_echo_mrpv' && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
+                <View style={styles.infoBox}>
+                  <ThemedText style={styles.infoText}>
+                    Zona Echo → MRPV
+                  </ThemedText>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Meteorological Conditions Card */}
@@ -329,7 +404,7 @@ export default function FlightContextScreen() {
               >
                 {isFetchingMETAR && <ActivityIndicator color="#ffffff" size="small" />}
                 <ThemedText style={styles.loadMetarButtonText}>
-                  {departure ? `Cargar METAR de ${departure}` : 'Seleccione aeropuerto'}
+                  {departure ? `Cargar METAR` : 'Seleccione aeropuerto'}
                 </ThemedText>
               </TouchableOpacity>
             ) : (
@@ -498,10 +573,10 @@ export default function FlightContextScreen() {
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: '#fafafa',
+    borderRadius: 10,
+    padding: 16,
     marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   section: {
     marginBottom: 12,
@@ -527,6 +602,19 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
     color: '#666',
+  },
+  helperBox: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 6,
+    marginTop: 0,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2196F3',
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#616161',
+    lineHeight: 18,
   },
   headerRow: {
     flexDirection: 'row',

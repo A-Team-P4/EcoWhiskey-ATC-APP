@@ -13,7 +13,7 @@ import { Icon } from '@/components/atoms/Icon';
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
-import { usePhaseScores } from '@/query_hooks/useScores';
+import { useAllPhasesScores } from '@/query_hooks/useScores';
 import { useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useRouter } from 'expo-router';
@@ -73,12 +73,12 @@ interface PhaseCardProps {
   phaseId: string;
   phaseLabel: string;
   onPress: (phaseId: string) => void;
+  averageScore: number;
+  totalScores: number;
+  isLoading: boolean;
 }
 
-const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
-  const { data: phaseData, isLoading } = usePhaseScores(phaseId);
-
-  const averageScore = phaseData?.average_score ?? 0;
+const PhaseCard = ({ phaseId, phaseLabel, onPress, averageScore, totalScores, isLoading }: PhaseCardProps) => {
   const scoreColor = getScoreColor(averageScore);
   const scoreLabel = getScoreLabel(averageScore);
 
@@ -109,7 +109,7 @@ const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
         )}
       </View>
 
-      {!isLoading && phaseData && (
+      {!isLoading && totalScores > 0 && (
         <>
           <Spacer size={8} />
           <View style={styles.phaseCardFooter}>
@@ -117,7 +117,7 @@ const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
               {scoreLabel}
             </Typography>
             <Typography variant="caption" style={styles.attemptCount}>
-              {phaseData.total_scores} {phaseData.total_scores === 1 ? 'intento' : 'intentos'}
+              {totalScores} {totalScores === 1 ? 'intento' : 'intentos'}
             </Typography>
           </View>
         </>
@@ -166,11 +166,19 @@ export default function ScoresScreen() {
     refetch,
   } = useTrainingContextHistory(userId);
 
+  // Fetch all phases scores in a single API call
+  const {
+    data: allPhasesData,
+    isLoading: isPhasesLoading,
+    refetch: refetchPhases,
+  } = useAllPhasesScores(PHASE_IDS);
+
   const handleRefresh = useCallback(() => {
     if (userId) {
       refetch();
     }
-  }, [refetch, userId]);
+    refetchPhases();
+  }, [refetch, refetchPhases, userId]);
 
   const handlePhasePress = useCallback(
     (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
@@ -182,7 +190,7 @@ export default function ScoresScreen() {
     (sessionId: string) => { router.push({ pathname: '/session-detail',  params: { sessionId }, }); }, [router],
   );
 
-  const isBusy = isUserLoading || isHistoryLoading;
+  const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
 
   return (
     <ResponsiveLayout showTopNav={true}>
@@ -256,14 +264,20 @@ export default function ScoresScreen() {
         {/* Categories View */}
         {!isBusy && viewMode === 'categories' && (
           <View style={styles.grid}>
-            {PHASE_IDS.map((phaseId) => (
-              <PhaseCard
-                key={phaseId}
-                phaseId={phaseId}
-                phaseLabel={PHASE_LABELS[phaseId]}
-                onPress={handlePhasePress}
-              />
-            ))}
+            {PHASE_IDS.map((phaseId) => {
+              const phaseData = allPhasesData?.phases?.[phaseId];
+              return (
+                <PhaseCard
+                  key={phaseId}
+                  phaseId={phaseId}
+                  phaseLabel={PHASE_LABELS[phaseId]}
+                  onPress={handlePhasePress}
+                  averageScore={phaseData?.average_score ?? 0}
+                  totalScores={phaseData?.total_scores ?? 0}
+                  isLoading={isPhasesLoading}
+                />
+              );
+            })}
           </View>
         )}
 
