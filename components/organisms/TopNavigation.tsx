@@ -30,7 +30,6 @@ export const TopNavigation: React.FC = () => {
 
   const isMobile = width < 768;
   const isATCActive = pathname.includes('ATCTrainingTab');
-  const isTrainingHistoryTab = pathname.includes('TrainingHistoryTab');
   const isScoresActive = pathname.includes('ScoresTab');
   const isUserProfileTab = pathname.includes('UserProfileTab');
 
@@ -79,7 +78,7 @@ export const TopNavigation: React.FC = () => {
   const handleProfilePress = () => {
     setShowAccountMenu(false);
     requestNavigation(() => {
-      router.push('/(tabs)/UserProfileTab');
+      router.push('/user-profile');
     });
   };
 
@@ -100,10 +99,10 @@ export const TopNavigation: React.FC = () => {
 
       <View style={styles.topRow}>
         <Image
-          source={require('@/assets/images/EcoWhiskey.png')}
+          source={require('@/assets/images/EcoWhiskey_New.png')}
           style={{
-            height: isMobile ? 50 : 60,
-            width: isMobile ? 180 : 240,
+            height: isMobile ? 30 : 35,
+            width: isMobile ? 200 : 220,
           }}
         />
 
@@ -124,7 +123,7 @@ export const TopNavigation: React.FC = () => {
                 <Avatar.Text
                   size={40}
                   label={getInitials()}
-                  style={{ backgroundColor: '#000' }}
+                  style={{ backgroundColor: '#2196F3' }}
                   labelStyle={{ color: '#fff', fontWeight: 'bold' }}
                 />
               )}
@@ -175,27 +174,6 @@ export const TopNavigation: React.FC = () => {
                 />
                 <ThemedText style={[ styles.webTabLabel, { fontWeight: isATCActive ? '600' : '400', color: isATCActive ? '#2196F3' : '#666',  }, ]} >
                   ATC Practice
-                </ThemedText>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleATCPress}
-              activeOpacity={0.7}
-              style={[
-                styles.webTabButton,
-                { borderBottomColor: isTrainingHistoryTab ? '#3d93d8' : 'transparent' },
-              ]}
-            >
-              <View style={styles.webTabContent}>
-                <Icon
-                  type='FontAwesome5'
-                  name='history'
-                  size={20}
-                  color={isTrainingHistoryTab ? '#2196F3' : '#666'}
-                />
-                <ThemedText style={[ styles.webTabLabel, { fontWeight: isTrainingHistoryTab ? '600' : '400', color: isTrainingHistoryTab ? '#2196F3' : '#666',  }, ]} >
-                  Historial
                 </ThemedText>
               </View>
             </TouchableOpacity>

@@ -5,70 +5,22 @@ import { ThemedText } from '@/components/themed-text';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useCreateTrainingContext } from '@/query_hooks/useTrainingContext';
 import { fetchMETARData } from '@/services/apiClient';
-import { AIRPORTS, CONDITIONS, SCENARIOS, VISIBILITY } from '@/utils/dropDowns';
+import { CLOUD_BASE_VALUES, CLOUD_COVERAGE, CONDITIONS, DEW_POINT_VALUES, QNH_VALUES, SCENARIOS, TEMPERATURE_VALUES, VISIBILITY, WIND_DIRECTIONS, WIND_SPEEDS } from '@/utils/dropDowns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
 
-// Generate QNH values from 980 to 1050
-const QNH_VALUES = Array.from({ length: 71 }, (_, i) => {
-  const value = 980 + i;
-  return { label: `${value} hPa`, value: value.toString() };
-});
-
-// Generate wind directions (0° to 350° in 10° increments)
-const WIND_DIRECTIONS = Array.from({ length: 36 }, (_, i) => {
-  const value = i * 10;
-  return { label: `${value.toString().padStart(3, '0')}°`, value: value.toString().padStart(3, '0') };
-});
-
-// Generate wind speeds (0 to 50 knots)
-const WIND_SPEEDS = Array.from({ length: 51 }, (_, i) => {
-  return { label: `${i} ${i === 1 ? 'nudo' : 'nudos'}`, value: i.toString() };
-});
-
-// Generate temperature values (-20°C to 50°C)
-const TEMPERATURE_VALUES = Array.from({ length: 71 }, (_, i) => {
-  const value = -20 + i;
-  return { label: `${value}°C`, value: value.toString() };
-});
-
-// Generate dew point values (-20°C to 40°C)
-const DEW_POINT_VALUES = Array.from({ length: 61 }, (_, i) => {
-  const value = -20 + i;
-  return { label: `${value}°C`, value: value.toString() };
-});
-
-// Cloud coverage options
-const CLOUD_COVERAGE = [
-  { label: 'SKC - Sky Clear (Cielo despejado)', value: 'SKC' },
-  { label: 'FEW - Few (Pocas nubes, 1-2 octavos)', value: 'FEW' },
-  { label: 'SCT - Scattered (Dispersas, 3-4 octavos)', value: 'SCT' },
-  { label: 'BKN - Broken (Fragmentadas, 5-7 octavos)', value: 'BKN' },
-  { label: 'OVC - Overcast (Cubierto, 8 octavos)', value: 'OVC' },
-];
-
-// Cloud base altitude (in feet) - common values for training
-const CLOUD_BASE_VALUES = Array.from({ length: 20 }, (_, i) => {
-  const value = (i + 1) * 500; // 500ft increments up to 10,000ft
-  return { label: `${value} ft`, value: value.toString() };
-});
-
 export default function FlightContextScreen() {
+  //* HOOKS
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isWeb = width >= 768;
-
   const [departure, setDeparture] = useState('');
   const [arrival, setArrival] = useState('');
-
-  // Toggle between current conditions and manual setup
   const [useCurrentConditions, setUseCurrentConditions] = useState(false);
   const [isFetchingMETAR, setIsFetchingMETAR] = useState(false);
-
-  // Meteo object state
   const [meteo, setMeteo] = useState({
     condition: '',
     vis: '',
@@ -80,44 +32,15 @@ export default function FlightContextScreen() {
     cloudCover: '',
     cloudBase: '',
   });
-
-  // Objective state - single selection
-  const [objective, setObjective] = useState('');
-
-  // Snackbar hook
+  const [scenario, setScenario] = useState('');
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
-
-  // Training context mutation
   const { mutate: createContext, isPending } = useCreateTrainingContext();
 
-  // Debug: Log meteo state changes (commented out to reduce console noise)
-  // useEffect(() => {
-  //   console.log('🔍 Meteo state updated:', meteo);
-  //   console.log('🔍 QNH value:', meteo.qnh, 'Type:', typeof meteo.qnh);
-  //   console.log('🔍 Condition value:', meteo.condition, 'Type:', typeof meteo.condition);
-  // }, [meteo]);
 
-  // Function to map METAR visibility to our format
-  const mapMETARVisibility = (visib: string): string => {
-    if (visib === '6+' || visib === '10+') return '>10km';
-    if (visib.includes('10')) return '10km';
-    if (visib.includes('5')) return '5km';
-    if (visib.includes('3')) return '3km';
-    if (visib.includes('1')) return '1km';
-    return '>10km'; // default
-  };
-
-  // Function to map METAR flight category to condition
-  const mapFlightCategory = (fltCat: string): string => {
-    if (fltCat === 'VFR' || fltCat === 'MVFR') return 'VMC';
-    if (fltCat === 'IFR' || fltCat === 'LIFR') return 'IMC';
-    return 'VMC'; // default
-  };
-
-  // Fetch current METAR conditions
+  //* HANDLERS
   const handleFetchCurrentConditions = async () => {
-    if (!departure) {
-      showSnackbar('Por favor seleccione aeropuerto de salida primero', 'error');
+    if (!scenario) {
+      showSnackbar('Por favor seleccione escenario de práctica', 'error');
       return;
     }
 
@@ -125,22 +48,9 @@ export default function FlightContextScreen() {
     try {
       const metarData = await fetchMETARData('MROC');
       //const metarData = await fetchMETARData(departure);
-
-      console.log('📡 Raw METAR Data:', metarData);
-      console.log('📡 Flight Category (fltCat):', metarData.fltCat);
-      console.log('📡 Altimeter (altim):', metarData.altim);
-      console.log('📡 Visibility (visib):', metarData.visib);
-
       const mappedCondition = mapFlightCategory(metarData.fltCat);
       const mappedVis = mapMETARVisibility(metarData.visib);
-      // Round QNH to nearest integer to match dropdown values
       const mappedQnh = Math.round(metarData.altim).toString();
-
-      console.log('✅ Mapped condition:', mappedCondition);
-      console.log('✅ Mapped visibility:', mappedVis);
-      console.log('✅ Mapped QNH:', mappedQnh);
-
-      // Map METAR data to our meteo state
       const newMeteo = {
         condition: mappedCondition,
         vis: mappedVis,
@@ -153,23 +63,15 @@ export default function FlightContextScreen() {
         cloudBase: metarData.clouds?.[0]?.base?.toString() || '',
       };
 
-      console.log('✅ Complete meteo state to be set:', newMeteo);
       setMeteo(newMeteo);
 
       setUseCurrentConditions(true);
-      showSnackbar(`Condiciones actuales de ${departure} cargadas exitosamente`, 'success');
     } catch (error: any) {
-      console.error('❌ Error fetching METAR data:', error);
-      showSnackbar(
-        error?.message || `No se pudieron cargar las condiciones de ${departure}`,
-        'error'
-      );
+      showSnackbar( error?.message || `No se pudieron cargar las condiciones METAR, seleccionalas manualmente`, 'error'  );
     } finally {
       setIsFetchingMETAR(false);
     }
   };
-
-  // Toggle handler
   const handleToggleConditions = (value: boolean) => {
     setUseCurrentConditions(value);
     if (!value) {
@@ -187,7 +89,6 @@ export default function FlightContextScreen() {
       });
     }
   };
-
   const handleStart = () => {
     // Construct wind as "direction/speed"
     const wind = meteo.windDirection && meteo.windSpeed
@@ -196,18 +97,18 @@ export default function FlightContextScreen() {
 
     // Construct route - fixed for specific scenarios, otherwise use departure-arrival
     let route = '';
-    if (objective === 'mrpv_full_flight') {
+    if (scenario === 'mrpv_full_flight') {
       route = 'MRPV-MRPV';
-    } else if (objective === 'mrpv_zone_echo') {
+    } else if (scenario === 'mrpv_zone_echo') {
       route = 'MRPV-mrpv_zone_echo';
-    } else if (objective === 'zone_echo_mrpv') {
+    } else if (scenario === 'zone_echo_mrpv') {
       route = 'zone_echo_mrpv-MRPV';
     } else {
       route = departure && arrival ? `${departure}-${arrival}` : '';
     }
 
     // Validate required fields
-    if (!objective) {
+    if (!scenario) {
       showSnackbar('Por favor seleccione un objetivo de práctica', 'error');
       return;
     }
@@ -224,7 +125,7 @@ export default function FlightContextScreen() {
         ...meteo,
         wind,
       },
-      scenario_id: objective ,
+      scenario_id: scenario ,
     };
 
     console.log('📤 Sending training config:', trainingConfig);
@@ -254,6 +155,20 @@ export default function FlightContextScreen() {
       },
     });
   };
+  //* HELPERS
+  const mapFlightCategory = (fltCat: string): string => {
+    if (fltCat === 'VFR' || fltCat === 'MVFR') return 'VMC';
+    if (fltCat === 'IFR' || fltCat === 'LIFR') return 'IMC';
+    return 'VMC'; // default
+  };
+  const mapMETARVisibility = (visib: string): string => {
+    if (visib === '6+' || visib === '10+') return '>10km';
+    if (visib.includes('10')) return '10km';
+    if (visib.includes('5')) return '5km';
+    if (visib.includes('3')) return '3km';
+    if (visib.includes('1')) return '1km';
+    return '>10km';
+  };
 
   return (
     <ResponsiveLayout showTopNav={true}>
@@ -261,9 +176,7 @@ export default function FlightContextScreen() {
         <View style={{ maxWidth: isWeb ? 1000 : '100%', width: '100%', alignSelf: 'center' }}>
 
           {/* Configuration Header */}
-          <ThemedText style={{ fontSize: 24, fontWeight: '700', marginBottom: 16 }}>
-            Configuración de Práctica
-          </ThemedText>
+          <ThemedText style={{ fontSize: 24, fontWeight: '700', marginBottom: 16 }}> Configuración de Práctica </ThemedText>
 
           {/* Scenario & Route Card */}
           <View style={styles.card}>
@@ -274,12 +187,12 @@ export default function FlightContextScreen() {
                 label="Escenario"
                 placeholder="Seleccione un escenario"
                 options={SCENARIOS}
-                value={objective}
-                onSelect={setObjective}
+                value={scenario}
+                onSelect={setScenario}
               />
 
               {/* Helper text for mrpv_full_flight scenario */}
-              {objective === 'mrpv_full_flight' && (
+              {scenario === 'mrpv_full_flight' && (
                 <View style={styles.helperBox}>
                   <ThemedText style={styles.helperText}>
                     Este escenario simula un vuelo completo que parte del aeropuerto de Tobías Bolaño (MRPV), se dirige hacia la Zona Echo y luego regresa a MRPV. Es ideal para practicar todas las fases del vuelo, desde el despegue hasta el aterrizaje.
@@ -288,7 +201,7 @@ export default function FlightContextScreen() {
               )}
 
               {/* Helper text for mrpv_zone_echo scenario */}
-              {objective === 'mrpv_zone_echo' && (
+              {scenario === 'mrpv_zone_echo' && (
                 <View style={styles.helperBox}>
                   <ThemedText style={styles.helperText}>
                     Este escenario simula un vuelo desde el aeropuerto de Tobías Bolaños (MRPV) hacia la Zona Echo. Es ideal para practicar el despegue, comunicaciones iniciales y salida del espacio aéreo controlado.
@@ -297,7 +210,7 @@ export default function FlightContextScreen() {
               )}
 
               {/* Helper text for zone_echo_mrpv scenario */}
-              {objective === 'zone_echo_mrpv' && (
+              {scenario === 'zone_echo_mrpv' && (
                 <View style={styles.helperBox}>
                   <ThemedText style={styles.helperText}>
                     Este escenario simula un vuelo de regreso desde la Zona Echo hacia el aeropuerto de Tobías Bolaños (MRPV). Es ideal para practicar la entrada al espacio aéreo controlado, aproximación y aterrizaje.
@@ -307,7 +220,7 @@ export default function FlightContextScreen() {
             </View>
 
             {/* Route - Only show if NOT mrpv_full_flight or mrpv_zone_echo or zone_echo_mrpv */}
-            {objective !== 'mrpv_full_flight' && objective !== 'mrpv_zone_echo' && objective !== 'zone_echo_mrpv' && (
+            {/* {scenario !== 'mrpv_full_flight' && scenario !== 'mrpv_zone_echo' && scenario !== 'zone_echo_mrpv' && (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
                 <View style={{ flexDirection: isWeb ? 'row' : 'column', gap: isWeb ? 12 : 0 }}>
@@ -338,10 +251,10 @@ export default function FlightContextScreen() {
                   </View>
                 )}
               </View>
-            )}
+            )} */}
 
             {/* Fixed route display for mrpv_full_flight */}
-            {objective === 'mrpv_full_flight' && (
+            {scenario === 'mrpv_full_flight' && (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
                 <View style={styles.infoBox}>
@@ -353,7 +266,7 @@ export default function FlightContextScreen() {
             )}
 
             {/* Fixed route display for mrpv_zone_echo */}
-            {objective === 'mrpv_zone_echo' && (
+            {scenario === 'mrpv_zone_echo' && (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
                 <View style={styles.infoBox}>
@@ -365,7 +278,7 @@ export default function FlightContextScreen() {
             )}
 
             {/* Fixed route display for zone_echo_mrpv */}
-            {objective === 'zone_echo_mrpv' && (
+            {scenario === 'zone_echo_mrpv' && (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
                 <View style={styles.infoBox}>
@@ -397,20 +310,20 @@ export default function FlightContextScreen() {
             {/* Load Current Conditions Button */}
             {!useCurrentConditions ? (
               <TouchableOpacity
-                style={[styles.loadMetarButton, (isFetchingMETAR || !departure) && styles.loadMetarButtonDisabled]}
+                style={[styles.loadMetarButton, (isFetchingMETAR || !scenario) && styles.loadMetarButtonDisabled]}
                 onPress={handleFetchCurrentConditions}
-                disabled={isFetchingMETAR || !departure}
+                disabled={isFetchingMETAR || !scenario}
                 activeOpacity={0.8}
               >
                 {isFetchingMETAR && <ActivityIndicator color="#ffffff" size="small" />}
                 <ThemedText style={styles.loadMetarButtonText}>
-                  {departure ? `Cargar METAR` : 'Seleccione aeropuerto'}
+                  {scenario ? `Cargar METAR` : 'Selecciona un scenario'}
                 </ThemedText>
               </TouchableOpacity>
             ) : (
               <View style={styles.currentConditionsInfo}>
                 <ThemedText style={styles.currentConditionsText}>
-                  Datos del METAR de {departure}
+                  Datos METAR
                 </ThemedText>
               </View>
             )}

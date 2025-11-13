@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -17,6 +16,7 @@ import { useAllPhasesScores } from '@/query_hooks/useScores';
 import { useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useRouter } from 'expo-router';
+import { SCENARIOS } from '@/utils/dropDowns';
 
 // Phase labels mapping based on the database phase_id values
 const PHASE_LABELS: Record<string, string> = {
@@ -133,6 +133,16 @@ interface SessionCardProps {
 
 const SessionCard = ({ session, onPress }: SessionCardProps) => {
   const sessionDate = useMemo(() => formatDateTime(session.createdAt), [session.createdAt]);
+  const updatedDate = useMemo(() => formatDateTime(session.updatedAt), [session.updatedAt]);
+
+  // Map scenario_id to label using SCENARIOS constant
+  const scenarioLabel = useMemo(() => {
+    const scenarioId = session.context?.scenario_id;
+    if (!scenarioId) return 'Escenario no disponible';
+
+    const scenario = SCENARIOS.find(s => s.value === scenarioId);
+    return scenario?.label || scenarioId;
+  }, [session.context?.scenario_id]);
 
   return (
     <TouchableOpacity
@@ -141,11 +151,18 @@ const SessionCard = ({ session, onPress }: SessionCardProps) => {
       activeOpacity={0.7}
     >
       <View style={styles.sessionCardHeader}>
-        <Typography variant="body" style={styles.sessionCardTitle}>
-          {sessionDate}
-        </Typography>
+        <View style={{ flex: 1 }}>
+          <Typography variant="body" style={styles.sessionCardTitle}>
+            {sessionDate}
+          </Typography>
+          {session.updatedAt && (
+            <Typography variant="caption" style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+              Actualizado: {updatedDate}
+            </Typography>
+          )}
+        </View>
         <Typography variant="caption" style={styles.sessionCardRoute}>
-          {session.context?.route || 'Ruta no disponible'}
+          {scenarioLabel}
         </Typography>
       </View>
     </TouchableOpacity>
@@ -162,23 +179,13 @@ export default function ScoresScreen() {
   const {
     data: history = [],
     isLoading: isHistoryLoading,
-    isRefetching,
-    refetch,
   } = useTrainingContextHistory(userId);
 
   // Fetch all phases scores in a single API call
   const {
     data: allPhasesData,
     isLoading: isPhasesLoading,
-    refetch: refetchPhases,
   } = useAllPhasesScores(PHASE_IDS);
-
-  const handleRefresh = useCallback(() => {
-    if (userId) {
-      refetch();
-    }
-    refetchPhases();
-  }, [refetch, refetchPhases, userId]);
 
   const handlePhasePress = useCallback(
     (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
@@ -197,9 +204,6 @@ export default function ScoresScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={Boolean(isRefetching && !isBusy)} onRefresh={handleRefresh} />
-        }
       >
         <Typography variant="h1" style={styles.title}>
           Calificaciones
