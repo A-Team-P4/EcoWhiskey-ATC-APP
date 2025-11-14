@@ -60,23 +60,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="TrainingHistoryTab"
-        options={{
-          title: "Historial",
-         tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabContainer}>
-              {focused && <View style={styles.activeIndicator} />}
-              <Icon
-                type="FontAwesome5"
-                name="history"
-                size={20}
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="ScoresTab"
         options={{
           title: "Score",

@@ -154,16 +154,52 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
 
   return (
     <View style={formStyles.container}>
-      <SegmentedControl
-        title="Tipo de cuenta"
-        value={accountType}
-        onValueChange={setAccountType}
-        options={[
-          { value: 'student', label: 'Estudiante' },
-          { value: 'instructor', label: 'Instructor' },
-        ]}
-      />
-      
+      {/* Account Type Toggle */}
+      <View style={{ marginBottom: 20 }}>
+        <Typography variant="body" style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#333' }}>
+          Tipo de cuenta
+        </Typography>
+        <View style={formStyles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              formStyles.toggleButton,
+              accountType === 'student' && formStyles.toggleButtonActive,
+            ]}
+            onPress={() => setAccountType('student')}
+            activeOpacity={0.7}
+          >
+            <Typography
+              variant="body"
+              style={[
+                formStyles.toggleButtonText,
+                accountType === 'student' && formStyles.toggleButtonTextActive,
+              ]}
+            >
+              Estudiante
+            </Typography>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              formStyles.toggleButton,
+              accountType === 'instructor' && formStyles.toggleButtonActive,
+            ]}
+            onPress={() => setAccountType('instructor')}
+            activeOpacity={0.7}
+          >
+            <Typography
+              variant="body"
+              style={[
+                formStyles.toggleButtonText,
+                accountType === 'instructor' && formStyles.toggleButtonTextActive,
+              ]}
+            >
+              Instructor
+            </Typography>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={formStyles.formFields}>
         {/* Name fields */}
         <View style={isMobile ? formStyles.fieldGroup : formStyles.fieldRow}>
@@ -285,5 +321,29 @@ const formStyles = StyleSheet.create({
     alignSelf: 'flex-end', // Justify to the right
     minWidth: 200, // Minimum width for the button
     maxWidth: 300, // Maximum width to prevent it from being too wide
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    padding: 4,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#2196F3',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  toggleButtonTextActive: {
+    color: '#fff',
   },
 });

@@ -1,5 +1,5 @@
 import UpdateProfileScreen from "@/components/pages/UpdateProfileScreen";
 
-export default function UserProfileTab() {
+export default function UserProfileScreen() {
   return <UpdateProfileScreen />;
 }

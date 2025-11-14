@@ -198,8 +198,41 @@ export const createTrainingContext = async (config: TrainingConfiguration) => {
 };
 
 export const getTrainingContextHistory = async (userId: string): Promise<TrainingSession[]> => {
-  const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
-  return response.data;
+  console.log('📋 [HISTORY API] Requesting training context history');
+  console.log('📋 [HISTORY API] User ID:', userId);
+  console.log('📋 [HISTORY API] Endpoint:', `/training_context/history/${userId}`);
+  console.log('📋 [HISTORY API] Full URL:', `${API_BASE_URL}/training_context/history/${userId}`);
+
+  try {
+    const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
+
+    console.log('✅ [HISTORY API] Training context history response received');
+    console.log('✅ [HISTORY API] Status:', response.status);
+    console.log('✅ [HISTORY API] User ID:', userId);
+    console.log('✅ [HISTORY API] Number of sessions:', response.data?.length || 0);
+    console.log('✅ [HISTORY API] Full Response:', JSON.stringify(response, null, 2));
+    console.log('✅ [HISTORY API] Response data:', JSON.stringify(response.data, null, 2));
+
+    // Log individual session details if available
+    if (response.data && response.data.length > 0) {
+      response.data.forEach((session, index) => {
+        console.log(`✅ [HISTORY API] Session ${index + 1}:`, {
+          trainingSessionId: session.trainingSessionId,
+          createdAt: session.createdAt,
+          route: session.context?.route,
+          scenario_id: session.context?.scenario_id,
+        });
+      });
+    }
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [HISTORY API] Error fetching training context history');
+    console.error('❌ [HISTORY API] Error status:', error.response?.status);
+    console.error('❌ [HISTORY API] Error message:', error.message);
+    console.error('❌ [HISTORY API] Error response:', JSON.stringify(error.response?.data, null, 2));
+    throw error;
+  }
 };
 
 // Get scores for a specific training session

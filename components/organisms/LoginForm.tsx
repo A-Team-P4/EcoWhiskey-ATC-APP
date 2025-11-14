@@ -2,7 +2,7 @@ import { LoginCredentials } from '@/interfaces/user';
 import { requestPasswordReset } from '@/services/apiClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Modal, Platform, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
@@ -43,13 +43,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
     const newErrors: FormErrors = {};
 
     if (!email.trim()) {
-      newErrors.email = 'El correo es requerido';
+      newErrors.email = 'El correo electrónicoes requerido';
     } else if (!validateEmail(email)) {
-      newErrors.email = 'Formato de correo invalido';
+      newErrors.email = 'Formato de correo electrónico invalido';
     }
 
     if (!password) {
-      newErrors.password = 'La contrasena es requerida';
+      newErrors.password = 'La contraseña es requerida';
     }
 
     setErrors(newErrors);
@@ -81,12 +81,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
     const trimmedEmail = resetEmail.trim().toLowerCase();
 
     if (!trimmedEmail) {
-      setResetEmailError('El correo es requerido');
+      setResetEmailError('El correo electrónico es requerido');
       return;
     }
 
     if (!validateEmail(trimmedEmail)) {
-      setResetEmailError('Formato de correo invalido');
+      setResetEmailError('Formato de correo electrónico inválido');
       return;
     }
 
@@ -94,7 +94,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
     setIsResetSubmitting(true);
     try {
       const response = await requestPasswordReset(trimmedEmail);
-      Alert.alert('Recuperacion de contrasena', response.message);
+      Alert.alert('Recuperacion de contraseña', response.message);
       setResetEmail('');
       setIsResetModalVisible(false);
     } catch (catchError) {
@@ -119,7 +119,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
-          source={require('@/assets/images/EcoWhiskey.png')}
+          source={require('@/assets/images/EcoWhiskey_New.png')}
           style={[styles.logo, isWeb && styles.logoWeb]}
           //resizeMode="contain"
         />
@@ -136,7 +136,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       <Spacer size={24} />
 
       <FormInput
-        label="Correo electronico"
+        label="Correo electrónico"
         value={email}
         onChangeText={(value) => {
           setEmail(value);
@@ -164,13 +164,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       />
       
 
-      <View style={styles.forgotPasswordContainer}>
-        <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
-          <Typography variant="caption" style={styles.forgotPasswordLink}>
-            Olvidaste tu contrasena?
-          </Typography>
-        </TouchableOpacity>
-      </View>
+      
 
       {serverError ? (
         <Typography variant="caption" style={styles.serverError}>
@@ -200,6 +194,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
         </TouchableOpacity>
       </View>
 
+      <View style={styles.forgotPasswordContainer}>
+        <TouchableOpacity onPress={handleOpenResetModal} disabled={isLoading}>
+          <Typography variant="caption" style={styles.forgotPasswordLink}>
+            ¿Olvidaste tu contraseña?
+          </Typography>
+        </TouchableOpacity>
+      </View>
+
       <Modal
         visible={isResetModalVisible}
         animationType="fade"
@@ -222,11 +224,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
             </View>
             <Spacer size={8} />
             <Typography variant="body" style={styles.modalSubtitle}>
-              Ingresa el correo asociado a tu cuenta para recibir instrucciones.
+              Ingresa el correo electrónico asociado a tu cuenta para recibir instrucciones.
             </Typography>
             <Spacer size={16} />
             <FormInput
-              label="Correo electronico"
+              label="Correo electrónico"
               value={resetEmail}
               onChangeText={(value) => {
                 setResetEmail(value);
@@ -278,12 +280,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   logo: {
-    width: 250,
-    height: 80,
+    width: 300,
+    height: 50,
   },
   logoWeb: {
-    width: 350,
-    height: 110,
+    width: 450,
+    height: 80,
   },
   title: {
     textAlign: 'center',
@@ -311,8 +313,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginTop: 8,
+    alignItems: 'center',
+    marginTop: 20,
   },
   forgotPasswordLink: {
     color: '#2196F3',
