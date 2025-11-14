@@ -126,6 +126,7 @@ export default function FlightContextScreen() {
         wind,
       },
       scenario_id: scenario ,
+      session_completed: false
     };
 
     console.log('📤 Sending training config:', trainingConfig);
