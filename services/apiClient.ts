@@ -183,7 +183,7 @@ export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, 
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-    timeout: 30000,
+    timeout: 60000,
   });
 
   return response.data;
@@ -198,8 +198,41 @@ export const createTrainingContext = async (config: TrainingConfiguration) => {
 };
 
 export const getTrainingContextHistory = async (userId: string): Promise<TrainingSession[]> => {
-  const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
-  return response.data;
+  console.log('📋 [HISTORY API] Requesting training context history');
+  console.log('📋 [HISTORY API] User ID:', userId);
+  console.log('📋 [HISTORY API] Endpoint:', `/training_context/history/${userId}`);
+  console.log('📋 [HISTORY API] Full URL:', `${API_BASE_URL}/training_context/history/${userId}`);
+
+  try {
+    const response = await apiClient.get<TrainingSession[]>(`/training_context/history/${userId}`);
+
+    console.log('✅ [HISTORY API] Training context history response received');
+    console.log('✅ [HISTORY API] Status:', response.status);
+    console.log('✅ [HISTORY API] User ID:', userId);
+    console.log('✅ [HISTORY API] Number of sessions:', response.data?.length || 0);
+    console.log('✅ [HISTORY API] Full Response:', JSON.stringify(response, null, 2));
+    console.log('✅ [HISTORY API] Response data:', JSON.stringify(response.data, null, 2));
+
+    // Log individual session details if available
+    if (response.data && response.data.length > 0) {
+      response.data.forEach((session, index) => {
+        console.log(`✅ [HISTORY API] Session ${index + 1}:`, {
+          trainingSessionId: session.trainingSessionId,
+          createdAt: session.createdAt,
+          route: session.context?.route,
+          scenario_id: session.context?.scenario_id,
+        });
+      });
+    }
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [HISTORY API] Error fetching training context history');
+    console.error('❌ [HISTORY API] Error status:', error.response?.status);
+    console.error('❌ [HISTORY API] Error message:', error.message);
+    console.error('❌ [HISTORY API] Error response:', JSON.stringify(error.response?.data, null, 2));
+    throw error;
+  }
 };
 
 // Get scores for a specific training session
@@ -248,6 +281,37 @@ export const getPhaseScores = async (phaseId: string) => {
   } catch (error: any) {
     console.error('❌ [SCORES API] Error fetching phase scores');
     console.error('❌ [SCORES API] Phase ID:', phaseId);
+    console.error('❌ [SCORES API] Error status:', error.response?.status);
+    console.error('❌ [SCORES API] Error message:', error.message);
+    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// Get scores for all phases in a single request
+export const getAllPhasesScores = async (phaseIds?: string[]) => {
+  console.log('📊 [SCORES API] Requesting all phases scores');
+  console.log('📊 [SCORES API] Phase IDs:', phaseIds);
+
+  const endpoint = phaseIds && phaseIds.length > 0
+    ? `/scores/phases?phase_ids=${phaseIds.join(',')}`
+    : '/scores/phases';
+
+  console.log('📊 [SCORES API] Endpoint:', endpoint);
+  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
+
+  try {
+    const response = await apiClient.get(endpoint);
+
+    console.log('✅ [SCORES API] All phases scores response received');
+    console.log('✅ [SCORES API] Status:', response.status);
+    console.log('✅ [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
+    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [SCORES API] Error fetching all phases scores');
+    console.error('❌ [SCORES API] Phase IDs:', phaseIds);
     console.error('❌ [SCORES API] Error status:', error.response?.status);
     console.error('❌ [SCORES API] Error message:', error.message);
     console.error('❌ [SCORES API] Error response:', error.response?.data);

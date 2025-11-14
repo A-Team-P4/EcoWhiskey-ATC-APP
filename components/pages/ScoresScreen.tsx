@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -13,10 +12,11 @@ import { Icon } from '@/components/atoms/Icon';
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
-import { usePhaseScores } from '@/query_hooks/useScores';
+import { useAllPhasesScores } from '@/query_hooks/useScores';
 import { useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useRouter } from 'expo-router';
+import { SCENARIOS } from '@/utils/dropDowns';
 
 // Phase labels mapping based on the database phase_id values
 const PHASE_LABELS: Record<string, string> = {
@@ -73,12 +73,12 @@ interface PhaseCardProps {
   phaseId: string;
   phaseLabel: string;
   onPress: (phaseId: string) => void;
+  averageScore: number;
+  totalScores: number;
+  isLoading: boolean;
 }
 
-const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
-  const { data: phaseData, isLoading } = usePhaseScores(phaseId);
-
-  const averageScore = phaseData?.average_score ?? 0;
+const PhaseCard = ({ phaseId, phaseLabel, onPress, averageScore, totalScores, isLoading }: PhaseCardProps) => {
   const scoreColor = getScoreColor(averageScore);
   const scoreLabel = getScoreLabel(averageScore);
 
@@ -109,7 +109,7 @@ const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
         )}
       </View>
 
-      {!isLoading && phaseData && (
+      {!isLoading && totalScores > 0 && (
         <>
           <Spacer size={8} />
           <View style={styles.phaseCardFooter}>
@@ -117,7 +117,7 @@ const PhaseCard = ({ phaseId, phaseLabel, onPress }: PhaseCardProps) => {
               {scoreLabel}
             </Typography>
             <Typography variant="caption" style={styles.attemptCount}>
-              {phaseData.total_scores} {phaseData.total_scores === 1 ? 'intento' : 'intentos'}
+              {totalScores} {totalScores === 1 ? 'intento' : 'intentos'}
             </Typography>
           </View>
         </>
@@ -133,6 +133,16 @@ interface SessionCardProps {
 
 const SessionCard = ({ session, onPress }: SessionCardProps) => {
   const sessionDate = useMemo(() => formatDateTime(session.createdAt), [session.createdAt]);
+  const updatedDate = useMemo(() => formatDateTime(session.updatedAt), [session.updatedAt]);
+
+  // Map scenario_id to label using SCENARIOS constant
+  const scenarioLabel = useMemo(() => {
+    const scenarioId = session.context?.scenario_id;
+    if (!scenarioId) return 'Escenario no disponible';
+
+    const scenario = SCENARIOS.find(s => s.value === scenarioId);
+    return scenario?.label || scenarioId;
+  }, [session.context?.scenario_id]);
 
   return (
     <TouchableOpacity
@@ -141,11 +151,18 @@ const SessionCard = ({ session, onPress }: SessionCardProps) => {
       activeOpacity={0.7}
     >
       <View style={styles.sessionCardHeader}>
-        <Typography variant="body" style={styles.sessionCardTitle}>
-          {sessionDate}
-        </Typography>
+        <View style={{ flex: 1 }}>
+          <Typography variant="body" style={styles.sessionCardTitle}>
+            {sessionDate}
+          </Typography>
+          {session.updatedAt && (
+            <Typography variant="caption" style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+              Actualizado: {updatedDate}
+            </Typography>
+          )}
+        </View>
         <Typography variant="caption" style={styles.sessionCardRoute}>
-          {session.context?.route || 'Ruta no disponible'}
+          {scenarioLabel}
         </Typography>
       </View>
     </TouchableOpacity>
@@ -162,15 +179,13 @@ export default function ScoresScreen() {
   const {
     data: history = [],
     isLoading: isHistoryLoading,
-    isRefetching,
-    refetch,
   } = useTrainingContextHistory(userId);
 
-  const handleRefresh = useCallback(() => {
-    if (userId) {
-      refetch();
-    }
-  }, [refetch, userId]);
+  // Fetch all phases scores in a single API call
+  const {
+    data: allPhasesData,
+    isLoading: isPhasesLoading,
+  } = useAllPhasesScores(PHASE_IDS);
 
   const handlePhasePress = useCallback(
     (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
@@ -182,16 +197,13 @@ export default function ScoresScreen() {
     (sessionId: string) => { router.push({ pathname: '/session-detail',  params: { sessionId }, }); }, [router],
   );
 
-  const isBusy = isUserLoading || isHistoryLoading;
+  const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
 
   return (
     <ResponsiveLayout showTopNav={true}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={Boolean(isRefetching && !isBusy)} onRefresh={handleRefresh} />
-        }
       >
         <Typography variant="h1" style={styles.title}>
           Calificaciones
@@ -256,14 +268,20 @@ export default function ScoresScreen() {
         {/* Categories View */}
         {!isBusy && viewMode === 'categories' && (
           <View style={styles.grid}>
-            {PHASE_IDS.map((phaseId) => (
-              <PhaseCard
-                key={phaseId}
-                phaseId={phaseId}
-                phaseLabel={PHASE_LABELS[phaseId]}
-                onPress={handlePhasePress}
-              />
-            ))}
+            {PHASE_IDS.map((phaseId) => {
+              const phaseData = allPhasesData?.phases?.[phaseId];
+              return (
+                <PhaseCard
+                  key={phaseId}
+                  phaseId={phaseId}
+                  phaseLabel={PHASE_LABELS[phaseId]}
+                  onPress={handlePhasePress}
+                  averageScore={phaseData?.average_score ?? 0}
+                  totalScores={phaseData?.total_scores ?? 0}
+                  isLoading={isPhasesLoading}
+                />
+              );
+            })}
           </View>
         )}
 

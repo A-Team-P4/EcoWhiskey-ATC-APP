@@ -210,7 +210,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 8,
+    marginBottom: 2,
   },
   containerCompact: {
     marginBottom: 4,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     height: 46,
   },
   inputFocused: {
-    // backgroundColor: '#FFFFFF', // Uncomment if you want focused background
+    // backgroundColor: '#FFFFFF', 
   },
   inputDisabled: {
     opacity: 0.6,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   inputOutline: {
     borderRadius: 12,
-    // borderColor: '#E5E5EA', // Uncomment if you want default border color
+    // borderColor: '#E5E5EA', 
   },
   inputOutlineCompact: {
     borderRadius: 8,

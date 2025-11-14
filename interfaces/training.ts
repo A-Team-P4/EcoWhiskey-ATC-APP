@@ -89,3 +89,7 @@ export interface SessionSummaryResponse {
   phases: SessionPhaseData[];
   summary: string;
 }
+
+export interface AllPhasesScoresResponse {
+  phases: Record<string, PhaseScoresResponse>;
+}

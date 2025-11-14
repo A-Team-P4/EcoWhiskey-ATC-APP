@@ -3,6 +3,8 @@ import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultThem
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
@@ -20,6 +22,13 @@ export default function RootLayout() {
   const paperTheme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
   const navTheme = colorScheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
 
+  // Set document title for web
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      document.title = 'EcoWhiskey ATC';
+    }
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={paperTheme}>
@@ -33,6 +42,7 @@ export default function RootLayout() {
                 <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
                 <Stack.Screen name="phase-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="session-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="user-profile" options={{ headerShown: false }} />
               </Stack>
             </ProtectedRoute>
             <StatusBar style="auto" />
