@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -11,12 +12,15 @@ import {
 import { Icon } from '@/components/atoms/Icon';
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { useAllPhasesScores } from '@/query_hooks/useScores';
-import { useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
+import { useDeleteTrainingSession, useTrainingContextHistory } from '@/query_hooks/useTrainingContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
-import { useRouter } from 'expo-router';
+import { getLastControllerTurn } from '@/services/apiClient';
 import { SCENARIOS } from '@/utils/dropDowns';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 // Phase labels mapping based on the database phase_id values
 const PHASE_LABELS: Record<string, string> = {
@@ -129,11 +133,19 @@ const PhaseCard = ({ phaseId, phaseLabel, onPress, averageScore, totalScores, is
 interface SessionCardProps {
   session: any;
   onPress: (sessionId: string) => void;
+  onContinue?: (sessionId: string) => void;
+  onDelete?: (sessionId: string) => void;
 }
 
-const SessionCard = ({ session, onPress }: SessionCardProps) => {
+const SessionCard = ({ session, onPress, onContinue, onDelete }: SessionCardProps) => {
   const sessionDate = useMemo(() => formatDateTime(session.createdAt), [session.createdAt]);
   const updatedDate = useMemo(() => formatDateTime(session.updatedAt), [session.updatedAt]);
+  const isCompleted = session.context?.session_completed === true; // Only true if explicitly set to true in context
+
+  // Extract session ID suffix for display
+  const sessionIdSuffix = useMemo(() => {
+    return session.trainingSessionId ? session.trainingSessionId.split('-').pop()?.toUpperCase() : '';
+  }, [session.trainingSessionId]);
 
   // Map scenario_id to label using SCENARIOS constant
   const scenarioLabel = useMemo(() => {
@@ -152,18 +164,57 @@ const SessionCard = ({ session, onPress }: SessionCardProps) => {
     >
       <View style={styles.sessionCardHeader}>
         <View style={{ flex: 1 }}>
+          <Typography variant="caption" style={styles.sessionIdBadge}>
+            TID# {sessionIdSuffix}
+          </Typography>
           <Typography variant="body" style={styles.sessionCardTitle}>
             {sessionDate}
           </Typography>
           {session.updatedAt && (
             <Typography variant="caption" style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
-              Actualizado: {updatedDate}
+              Última interacción: {updatedDate}
             </Typography>
           )}
         </View>
         <Typography variant="caption" style={styles.sessionCardRoute}>
           {scenarioLabel}
         </Typography>
+      </View>
+
+      <Spacer size={10} />
+
+      <View style={styles.sessionCardFooter}>
+        {/* Status Badge */}
+        <View style={isCompleted ? styles.completedTag : styles.inProgressTag}>
+          <Typography variant="caption" style={isCompleted ? styles.completedText : styles.inProgressText}>
+            {isCompleted ? 'Completado' : 'En Progreso'}
+          </Typography>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.sessionActions}>
+          {!isCompleted && onContinue && (
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={() => onContinue(session.trainingSessionId)}
+              activeOpacity={0.7}
+            >
+              <Icon type="MaterialIcons" name="play-arrow" size={16} color="#2196F3" />
+              <Typography variant="caption" style={styles.continueButtonText}>
+                Continuar
+              </Typography>
+            </TouchableOpacity>
+          )}
+          {onDelete && (
+            <TouchableOpacity
+              onPress={() => onDelete(session.trainingSessionId)}
+              activeOpacity={0.7}
+              style={{ marginLeft: !isCompleted && onContinue ? 8 : 0 }}
+            >
+              <Icon type="MaterialIcons" name="delete-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -174,18 +225,51 @@ export default function ScoresScreen() {
   const userId = currentUser?.id;
   const router = useRouter();
 
-  const [viewMode, setViewMode] = useState<'categories' | 'sessions'>('categories');
+  const [viewMode, setViewMode] = useState<'categories' | 'sessions'>('sessions');
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const {
     data: history = [],
     isLoading: isHistoryLoading,
+    refetch: refetchHistory,
   } = useTrainingContextHistory(userId);
 
   // Fetch all phases scores in a single API call
   const {
     data: allPhasesData,
     isLoading: isPhasesLoading,
+    refetch: refetchPhasesScores,
   } = useAllPhasesScores(PHASE_IDS);
+
+  // Delete training session mutation
+  const deleteSessionMutation = useDeleteTrainingSession();
+
+  // Auto-refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) {
+        refetchHistory();
+        refetchPhasesScores();
+      }
+    }, [userId, refetchHistory, refetchPhasesScores])
+  );
+
+  // Manual refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchHistory(), refetchPhasesScores()]);
+      showSnackbar('Datos actualizados correctamente', 'success');
+    } catch (error) {
+      showSnackbar('Error al actualizar los datos', 'error');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchHistory, refetchPhasesScores, showSnackbar]);
 
   const handlePhasePress = useCallback(
     (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
@@ -197,6 +281,66 @@ export default function ScoresScreen() {
     (sessionId: string) => { router.push({ pathname: '/session-detail',  params: { sessionId }, }); }, [router],
   );
 
+  const handleContinueSession = useCallback(
+    async (sessionId: string) => {
+      try {
+        // Fetch the last controller turn to get the session state
+        const lastTurn = await getLastControllerTurn(sessionId);
+
+        // Navigate to ATC practice screen with all the required params
+        router.push({
+          pathname: '/atc-practice',
+          params: {
+            session_id: sessionId,
+            frequency: lastTurn.frequency,
+            controller_text: lastTurn.controller_text,
+            feedback: lastTurn.feedback,
+            session_completed: String(lastTurn.session_completed),
+          },
+        });
+      } catch (error: any) {
+        showSnackbar(
+          error?.response?.data?.message || 'No se pudo continuar la sesión. Por favor, intenta de nuevo.',
+          'error'
+        );
+      }
+    },
+    [router, showSnackbar],
+  );
+
+  const handleDeleteSession = useCallback(
+    (sessionId: string) => {
+      setSessionToDelete(sessionId);
+      setDeleteDialogVisible(true);
+    },
+    [],
+  );
+
+  const confirmDelete = useCallback(() => {
+    if (!sessionToDelete) return;
+
+    deleteSessionMutation.mutate(sessionToDelete, {
+      onSuccess: () => {
+        showSnackbar('La sesión ha sido eliminada correctamente', 'success');
+        setDeleteDialogVisible(false);
+        setSessionToDelete(null);
+      },
+      onError: (error: any) => {
+        showSnackbar(
+          error?.response?.data?.message || 'No se pudo eliminar la sesión. Por favor, intenta de nuevo.',
+          'error'
+        );
+        setDeleteDialogVisible(false);
+        setSessionToDelete(null);
+      },
+    });
+  }, [sessionToDelete, deleteSessionMutation, showSnackbar]);
+
+  const cancelDelete = useCallback(() => {
+    setDeleteDialogVisible(false);
+    setSessionToDelete(null);
+  }, []);
+
   const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
 
   return (
@@ -205,9 +349,24 @@ export default function ScoresScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.container}
       >
-        <Typography variant="h1" style={styles.title}>
-          Calificaciones
-        </Typography>
+        {/* Header with Title and Refresh Button */}
+        <View style={styles.headerContainer}>
+          <Typography variant="h1" style={styles.title}>
+            Calificaciones
+          </Typography>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            disabled={isRefreshing || isBusy}
+            style={styles.refreshButton}
+            activeOpacity={0.7}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color="#2196F3" />
+            ) : (
+              <Icon type="MaterialIcons" name="refresh" size={24} color="#2196F3" />
+            )}
+          </TouchableOpacity>
+        </View>
 
         <Spacer size={12} />
 
@@ -219,22 +378,6 @@ export default function ScoresScreen() {
 
         {/* Toggle View Mode */}
         <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              viewMode === 'categories' && styles.toggleButtonActive,
-            ]}
-            onPress={() => setViewMode('categories')}
-            activeOpacity={0.7}
-          >
-            <Typography
-              variant="body"
-              style={[ styles.toggleButtonText, viewMode === 'categories' && styles.toggleButtonTextActive, ]}
-            >
-              Fases de vuelo
-            </Typography>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[
               styles.toggleButton,
@@ -251,6 +394,22 @@ export default function ScoresScreen() {
               ]}
             >
               Sesiones
+            </Typography>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === 'categories' && styles.toggleButtonActive,
+            ]}
+            onPress={() => setViewMode('categories')}
+            activeOpacity={0.7}
+          >
+            <Typography
+              variant="body"
+              style={[ styles.toggleButtonText, viewMode === 'categories' && styles.toggleButtonTextActive, ]}
+            >
+              Fases de vuelo
             </Typography>
           </TouchableOpacity>
         </View>
@@ -304,7 +463,12 @@ export default function ScoresScreen() {
               <View style={styles.list}>
                 {history.map((session) => (
                   <React.Fragment key={session.trainingSessionId ?? session.createdAt}>
-                    <SessionCard session={session} onPress={handleSessionPress} />
+                    <SessionCard
+                      session={session}
+                      onPress={handleSessionPress}
+                      onContinue={handleContinueSession}
+                      onDelete={handleDeleteSession}
+                    />
                     <Spacer size={12} />
                   </React.Fragment>
                 ))}
@@ -313,6 +477,58 @@ export default function ScoresScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteDialogVisible}
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Icon type="MaterialIcons" name="warning" color="#EF4444" size={48} />
+            </View>
+
+            <Typography variant="h3" style={styles.modalTitle}>
+              Eliminar sesión
+            </Typography>
+
+            <Typography variant="body" style={styles.modalMessage}>
+              ¿Estás seguro de que deseas eliminar esta sesión de entrenamiento? Esta acción no se puede deshacer.
+            </Typography>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={cancelDelete}
+              >
+                <Typography variant="body" style={styles.cancelButtonText}>
+                  Cancelar
+                </Typography>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButtonModal]}
+                onPress={confirmDelete}
+              >
+                <Typography variant="body" style={styles.deleteButtonModalText}>
+                  Eliminar
+                </Typography>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Snackbar */}
+      <AppSnackbar
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={hideSnackbar}
+      />
     </ResponsiveLayout>
   );
 }
@@ -325,9 +541,23 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F0F9FF',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   subtitle: {
     opacity: 0.7,
@@ -431,8 +661,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  sessionIdBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    fontFamily: 'monospace',
+  },
   sessionCardRoute: {
     opacity: 0.6,
+  },
+  sessionCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  completedTag: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 0,
+  },
+  completedText: {
+    color: '#2E7D32',
+    fontWeight: '600',
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+  inProgressTag: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 0,
+  },
+  inProgressText: {
+    color: '#E65100',
+    fontWeight: '600',
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+  sessionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    backgroundColor: 'transparent',
+    gap: 4,
+  },
+  continueButtonText: {
+    color: '#2196F3',
+    fontWeight: '600',
+    fontSize: 12,
   },
   centerContent: {
     alignItems: 'center',
@@ -449,5 +736,72 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7,
     lineHeight: 22,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 30,
+    width: '80%',
+    maxWidth: 400,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+    }),
+    elevation: 10,
+  },
+  modalIconContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+    color: '#000',
+  },
+  modalMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#666',
+    lineHeight: 22,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#e0e0e0',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
+  deleteButtonModal: {
+    backgroundColor: '#EF4444',
+  },
+  deleteButtonModalText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
