@@ -1,13 +1,13 @@
 import { RegistrationData } from '@/interfaces/user';
+import { useSchools } from '@/query_hooks/useUserProfile';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
 import { Dropdown } from '../molecules/Dropdown';
 import { FormInput } from '../molecules/FormInput';
-import { SegmentedControl } from '../molecules/SegmentedControl';
 
 interface FormErrors {
   firstName?: string;
@@ -20,22 +20,6 @@ interface FormErrors {
 
 
 
-const schoolOptions = [
-  { label: 'AENSA - Academia de Enseñanza Aeronáutica', value: 'aensa', location: 'San José' },
-  { label: 'Escuela Costarricense de Aviación (ECDEA)', value: 'ecdea', location: 'San José' },
-  { label: 'CPEA Flight School S.A.', value: 'cpea', location: 'San José' },
-  { label: 'Instituto de Formación Aeronáutica (IFA)', value: 'ifa', location: 'San José' },
-  { label: 'Aerotica Escuela de Aviación', value: 'aerotica', location: 'San José' },
-  { label: 'Aeroformación S.A.', value: 'aeroformacion', location: 'San José' },
-  { label: 'ITAérea - Escuela Aeronáutica', value: 'itaerea', location: 'Heredia' },
-  { label: 'Aerobell Flight School', value: 'aerobell', location: 'San José' },
-  { label: 'Learn Robotix Academy S.A.', value: 'learnrobotix', location: 'San José' },
-  { label: 'Fly With Us S.A. (Ultraligeros)', value: 'flywithus', location: 'San José' },
-  { label: 'Seabreeze Aviation Costa Rica', value: 'seabreeze', location: 'San José' },
-  { label: 'Costa Air Service', value: 'costaair', location: 'San José' },
-  { label: 'Escuelas de Aviación Costa Rica', value: 'escuelasaviacioncr', location: 'San José' },
-  { label: 'Otra institución', value: 'other' }
-];
 
 interface RegistrationFormProps {
   onSubmit: (data: RegistrationData) => Promise<void>;
@@ -46,6 +30,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const router = useRouter();
+  const {
+    data: schoolsResponse = [],
+    isLoading: isSchoolsLoading,
+    isError: isSchoolsError,
+    error: schoolsError,
+  } = useSchools();
 
   //* Hooks
   const [firstName, setFirstName] = useState('');
@@ -56,6 +46,49 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
   const [school, setSchool] = useState('');
   const [accountType, setAccountType] = useState<'student' | 'instructor'>('student');
   const [errors, setErrors] = useState<FormErrors>({});
+  const schoolOptions = useMemo(
+    () =>
+      schoolsResponse.map((school) => ({
+        label: school.location ? `${school.name} - ${school.location}` : school.name,
+        value: String(school.id),
+      })),
+    [schoolsResponse]
+  );
+
+  useEffect(() => {
+    setSchool((prevSchool) => {
+      if (!prevSchool) {
+        return prevSchool;
+      }
+
+      const exists = schoolOptions.some((option) => option.value === prevSchool);
+      return exists ? prevSchool : '';
+    });
+  }, [schoolOptions]);
+
+  useEffect(() => {
+    if (accountType === 'student') {
+      setSchool('');
+      setErrors((prev) => ({ ...prev, school: undefined }));
+    }
+  }, [accountType]);
+
+  const schoolPlaceholder = isSchoolsLoading
+    ? 'Cargando escuelas...'
+    : isSchoolsError
+      ? 'No se pudieron cargar las escuelas'
+      : 'Selecciona tu instituciA3n educativa';
+
+  const schoolsLoadErrorMessage = isSchoolsError
+    ? schoolsError instanceof Error && schoolsError.message
+      ? schoolsError.message
+      : 'No se pudo cargar la lista de escuelas'
+    : undefined;
+
+  const schoolFieldError = errors.school ?? schoolsLoadErrorMessage;
+
+  const disableSchoolDropdown =
+    isSchoolsLoading || (!!schoolsLoadErrorMessage && schoolOptions.length === 0);
 
   //* Helpers
   const validateEmail = (email: string): boolean => {
@@ -95,13 +128,21 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    const trimmedSchool = school.trim();
+    const normalizedSchool =
+      accountType === 'instructor' && trimmedSchool
+        ? /^\d+$/.test(trimmedSchool)
+          ? Number(trimmedSchool)
+          : trimmedSchool
+        : undefined;
+
     const registrationData: RegistrationData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim().toLowerCase(),
       password,
       accountType,
-      ...(school.trim() && { school: school.trim() })
+      ...(normalizedSchool !== undefined && { schoolId: normalizedSchool }),
     };
 
     await onSubmit(registrationData);
@@ -260,16 +301,18 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
           </View>
         </View>
         
-        <Dropdown
-          label="Escuela"
-          value={school}
-          onSelect={handleSchoolChange}
-          options={schoolOptions}
-          error={errors.school}
-          required={accountType === 'instructor'}
-          placeholder="Selecciona tu institución educativa"
-        
-        />
+        {accountType === 'instructor' && (
+          <Dropdown
+            label="Escuela"
+            value={school}
+            onSelect={handleSchoolChange}
+            options={schoolOptions}
+            error={schoolFieldError}
+            required
+            placeholder={schoolPlaceholder}
+            disabled={disableSchoolDropdown}
+          />
+        )}
       </View>
       
       <Spacer size={4} />

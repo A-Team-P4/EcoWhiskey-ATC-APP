@@ -6,11 +6,13 @@ import { TopNavigation } from '@/components/organisms/TopNavigation';
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
   showTopNav?: boolean;
+  topNavProps?: React.ComponentProps<typeof TopNavigation>;
 }
 
 const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   children,
   showTopNav = false,
+  topNavProps,
 }) => {
   const { width } = useWindowDimensions();
 
@@ -39,7 +41,7 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      {showTopNav && <TopNavigation />}
+      {showTopNav && <TopNavigation {...topNavProps} />}
       <View className="w-full max-w-full md:max-w-2xl mx-auto flex-1">
         {children}
       </View>

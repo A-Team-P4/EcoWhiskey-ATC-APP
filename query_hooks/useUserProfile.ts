@@ -4,15 +4,22 @@ import { useEffect, useState } from 'react';
 
 import {
   changeUserPassword,
+  createSchool,
+  deleteSchool,
   getCurrentUser,
   getSchoolById,
+  getStudentsBySchool,
   getSchools,
   getUserById,
+  updateSchool,
   updateUserProfile,
   updateUserSchool,
 } from '../services/apiClient';
 import {
   ChangePasswordPayload,
+  SchoolCreateRequest,
+  SchoolResponse,
+  SchoolUpdateRequest,
   SchoolsResponse,
   SuccessResponse,
   UpdateUserPayload,
@@ -27,6 +34,8 @@ export const CURRENT_USER_QUERY_KEY = ['user', 'me'] as const;
 export const USER_QUERY_KEY = (userId: string) => ['user', userId] as const;
 export const SCHOOLS_QUERY_KEY = ['schools'] as const;
 export const SCHOOL_QUERY_KEY = (schoolId: string) => ['schools', schoolId] as const;
+export const SCHOOL_STUDENTS_QUERY_KEY = (schoolId: string | number) =>
+  ['schools', schoolId, 'students'] as const;
 
 const persistUser = async (user: User) => {
   try {
@@ -137,6 +146,13 @@ export const useSchoolById = (schoolId?: string) =>
     enabled: Boolean(schoolId),
   });
 
+export const useStudentsBySchool = (schoolId?: string | number) =>
+  useQuery<User[]>({
+    queryKey: schoolId ? SCHOOL_STUDENTS_QUERY_KEY(schoolId) : ['schools', 'students', 'detail'],
+    queryFn: () => getStudentsBySchool(schoolId as string | number),
+    enabled: Boolean(schoolId),
+  });
+
 interface UpdateUserVariables {
   userId: string;
   payload: UpdateUserPayload;
@@ -150,6 +166,15 @@ interface UpdateUserSchoolVariables {
 interface ChangePasswordVariables {
   userId: string;
   payload: ChangePasswordPayload;
+}
+
+interface UpdateSchoolMutationVariables {
+  schoolId: string;
+  payload: SchoolUpdateRequest;
+}
+
+interface DeleteSchoolVariables {
+  schoolId: string;
 }
 
 const useUserCacheUpdater = () => {
@@ -188,3 +213,39 @@ export const useChangeUserPassword = () =>
   useMutation<SuccessResponse, unknown, ChangePasswordVariables>({
     mutationFn: ({ userId, payload }) => changeUserPassword(userId, payload),
   });
+
+export const useCreateSchool = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<SchoolResponse, unknown, SchoolCreateRequest>({
+    mutationFn: (payload) => createSchool(payload),
+    onSuccess: (school) => {
+      queryClient.invalidateQueries({ queryKey: SCHOOLS_QUERY_KEY });
+      queryClient.setQueryData(SCHOOL_QUERY_KEY(school.id), school);
+    },
+  });
+};
+
+export const useUpdateSchool = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<SchoolResponse, unknown, UpdateSchoolMutationVariables>({
+    mutationFn: ({ schoolId, payload }) => updateSchool(schoolId, payload),
+    onSuccess: (school) => {
+      queryClient.invalidateQueries({ queryKey: SCHOOLS_QUERY_KEY });
+      queryClient.setQueryData(SCHOOL_QUERY_KEY(school.id), school);
+    },
+  });
+};
+
+export const useDeleteSchool = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<SuccessResponse, unknown, DeleteSchoolVariables>({
+    mutationFn: ({ schoolId }) => deleteSchool(schoolId),
+    onSuccess: (_, { schoolId }) => {
+      queryClient.invalidateQueries({ queryKey: SCHOOLS_QUERY_KEY });
+      queryClient.removeQueries({ queryKey: SCHOOL_QUERY_KEY(schoolId) });
+    },
+  });
+};

@@ -18,10 +18,15 @@ const LoginScreen: React.FC = () => {
   const handleLogin = async (credentials: LoginCredentials) => {
     return new Promise<void>((resolve, reject) => {
       loginMutation.mutate(credentials, {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          console.log("En el login", data)
           setServerError(null);
           resolve();
-          router.replace('/(tabs)/ATCTrainingTab');
+          const nextRoute =
+            data.accountType === "instructor"
+              ? '/instructor-dashboard'
+              : '/(tabs)/ATCTrainingTab';
+          router.replace(nextRoute);
         },
         onError: (error: any) => {
           const statusCode = error?.response?.status;

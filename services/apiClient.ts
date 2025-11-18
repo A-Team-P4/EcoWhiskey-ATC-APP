@@ -1,4 +1,12 @@
 // services/api.ts
+import {
+  GroupCreateRequest,
+  GroupListParams,
+  GroupMemberAddRequest,
+  GroupMembershipResponse,
+  GroupResponse,
+  GroupUpdateRequest,
+} from '@/interfaces/group';
 import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -8,7 +16,9 @@ import {
   ChangePasswordPayload,
   LoginCredentials,
   RegistrationData,
+  SchoolCreateRequest,
   SchoolResponse,
+  SchoolUpdateRequest,
   SchoolsResponse,
   SuccessResponse,
   UpdateUserPayload,
@@ -121,6 +131,105 @@ export const getSchools = async (): Promise<SchoolsResponse> => {
 
 export const getSchoolById = async (schoolId: string): Promise<SchoolResponse> => {
   const response = await apiClient.get<SchoolResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const getStudentsBySchool = async (
+  schoolId: string | number
+): Promise<User[]> => {
+  const response = await apiClient.get<User[]>(`/schools/${schoolId}/students`);
+  return response.data;
+};
+
+export const createSchool = async (
+  payload: SchoolCreateRequest
+): Promise<SchoolResponse> => {
+  const response = await apiClient.post<SchoolResponse>('/schools', payload);
+  return response.data;
+};
+
+export const updateSchool = async (
+  schoolId: string,
+  payload: SchoolUpdateRequest
+): Promise<SchoolResponse> => {
+  const response = await apiClient.patch<SchoolResponse>(`/schools/${schoolId}`, payload);
+  return response.data;
+};
+
+export const deleteSchool = async (schoolId: string): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const getGroups = async (
+  params?: GroupListParams
+): Promise<GroupResponse[]> => {
+  const response = await apiClient.get<GroupResponse[]>('/groups', { params });
+  return response.data;
+};
+
+export const getGroupById = async (groupId: string): Promise<GroupResponse> => {
+  const response = await apiClient.get<GroupResponse>(`/groups/${groupId}`);
+  return response.data;
+};
+
+export const createGroup = async (
+  payload: GroupCreateRequest
+): Promise<GroupResponse> => {
+  const response = await apiClient.post<GroupResponse>('/groups', payload);
+  return response.data;
+};
+
+export const updateGroup = async (
+  groupId: string,
+  payload: GroupUpdateRequest
+): Promise<GroupResponse> => {
+  const response = await apiClient.patch<GroupResponse>(`/groups/${groupId}`, payload);
+  return response.data;
+};
+
+export const deleteGroup = async (groupId: string): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(`/groups/${groupId}`);
+  return response.data;
+};
+
+export const getGroupMembers = async (
+  groupId: string
+): Promise<GroupMembershipResponse[]> => {
+  const response = await apiClient.get<GroupMembershipResponse[]>(
+    `/groups/${groupId}/members`
+  );
+  return response.data;
+};
+
+export const addGroupMember = async (
+  groupId: string,
+  payload: GroupMemberAddRequest
+): Promise<GroupMembershipResponse> => {
+  const response = await apiClient.post<GroupMembershipResponse>(
+    `/groups/${groupId}/members`,
+    payload
+  );
+  return response.data;
+};
+
+export const acceptGroupMembership = async (
+  groupId: string,
+  membershipId: string
+): Promise<GroupMembershipResponse> => {
+  const response = await apiClient.post<GroupMembershipResponse>(
+    `/groups/${groupId}/memberships/${membershipId}/accept`
+  );
+  return response.data;
+};
+
+export const removeGroupMember = async (
+  groupId: string,
+  userId: string
+): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(
+    `/groups/${groupId}/members/${userId}`
+  );
   return response.data;
 };
 

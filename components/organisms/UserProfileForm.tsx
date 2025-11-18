@@ -23,7 +23,10 @@ interface FormErrors {
   school?: string;
 }
 
-type UserProfileData = Pick<User, 'firstName' | 'lastName' | 'email' | 'accountType' | 'school' | 'photo'>;
+type UserProfileData = Pick<
+  User,
+  'firstName' | 'lastName' | 'email' | 'accountType' | 'school' | 'photo' | 'group'
+>;
 
 type ProfileFormSubmitPayload = {
   firstName?: string;
@@ -38,13 +41,19 @@ interface UserProfileFormProps {
   onSubmit: (data: ProfileFormSubmitPayload) => Promise<void>;
   isLoading?: boolean;
   isSchoolLoading?: boolean;
+  canLeaveGroup?: boolean;
+  onLeaveGroup?: () => Promise<void> | void;
+  leaveGroupLoading?: boolean;
 }
 export const UserProfileForm: React.FC<UserProfileFormProps> = ({
   userData,
   schools,
   onSubmit,
   isLoading = false,
-  isSchoolLoading = false
+  isSchoolLoading = false,
+  canLeaveGroup = false,
+  onLeaveGroup,
+  leaveGroupLoading = false,
 }) => {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -296,6 +305,44 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {userData.accountType === 'student' ? 'Estudiante' : 'Instructor'}
           </Typography>
         </View>
+
+        <View style={formStyles.infoRow}>
+          <Typography variant="caption" style={formStyles.infoLabel}>
+            Escuela actual
+          </Typography>
+          <Typography variant="body" style={formStyles.infoValue}>
+            {userData.school?.name ?? 'Sin escuela asignada'}
+          </Typography>
+        </View>
+
+        <View style={formStyles.infoRow}>
+          <Typography variant="caption" style={formStyles.infoLabel}>
+            Grupo asignado
+          </Typography>
+          <Typography variant="body" style={formStyles.infoValue}>
+            {userData.group?.name ?? 'Sin grupo'}
+          </Typography>
+          {userData.group?.description ? (
+            <Typography variant="caption" style={formStyles.groupDescription}>
+              {userData.group.description}
+            </Typography>
+          ) : null}
+          {canLeaveGroup && onLeaveGroup ? (
+            <View style={formStyles.leaveGroupContainer}>
+              <ActionButton
+                title={leaveGroupLoading ? 'Saliendo...' : 'Salir del grupo'}
+                variant="outline"
+                onPress={onLeaveGroup}
+                loading={leaveGroupLoading}
+                disabled={leaveGroupLoading || isLoading}
+                iconName="logout"
+              />
+              <Typography variant="caption" style={formStyles.leaveGroupHint}>
+                No eres el owner; puedes abandonar el grupo cuando lo necesites.
+              </Typography>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <Spacer size={24} />
@@ -428,6 +475,17 @@ const formStyles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
+  },
+  groupDescription: {
+    fontSize: 14,
+    color: '#4B5563',
+  },
+  leaveGroupContainer: {
+    marginTop: 8,
+    gap: 4,
+  },
+  leaveGroupHint: {
+    color: '#6B7280',
   },
   formFields: {
     gap: 16,

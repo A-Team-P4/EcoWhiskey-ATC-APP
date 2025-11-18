@@ -7,6 +7,7 @@ import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
+import { useRemoveGroupMember } from '@/query_hooks/useGroups';
 import {
   CURRENT_USER_QUERY_KEY,
   useChangeUserPassword,
@@ -38,12 +39,14 @@ function UpdateProfileScreen() {
     isFetching: isUserFetching,
     isError: isUserError,
     error: userError,
+    refetch: refetchCurrentUser,
   } = useCurrentUser();
   const { data: schoolsResponse = [], isLoading: isSchoolsLoading } = useSchools();
 
   const updateUserProfileMutation = useUpdateUserProfile();
   const updateUserSchoolMutation = useUpdateUserSchool();
   const changeUserPasswordMutation = useChangeUserPassword();
+  const removeGroupMemberMutation = useRemoveGroupMember();
 
   const profileMutationPending =
     updateUserProfileMutation.isPending || updateUserSchoolMutation.isPending;
@@ -182,6 +185,37 @@ function UpdateProfileScreen() {
     );
   }
 
+  const canLeaveGroup =
+    Boolean(resolvedUser.group) &&
+    (resolvedUser.group?.instructorId
+      ? resolvedUser.group.instructorId !== resolvedUser.id
+      : resolvedUser.group?.role
+        ? resolvedUser.group.role !== 'INSTRUCTOR'
+        : resolvedUser.accountType !== 'instructor');
+
+  const handleLeaveGroup = async () => {
+    if (!resolvedUser.group?.id) return;
+
+    try {
+      await removeGroupMemberMutation.mutateAsync({
+        groupId: String(resolvedUser.group.id),
+        userId: resolvedUser.id,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY }),
+        refetchCurrentUser(),
+      ]);
+      Alert.alert('Grupo', 'Abandonaste el grupo correctamente.');
+    } catch (error: any) {
+      console.error('Failed to leave group', error);
+      const message =
+        error?.response?.data?.message ??
+        error?.message ??
+        'No se pudo abandonar el grupo. Intenta nuevamente.';
+      Alert.alert('Error', message);
+    }
+  };
+
   return (
     <ResponsiveLayout showTopNav={true}>
       <ScrollView
@@ -194,6 +228,9 @@ function UpdateProfileScreen() {
           onSubmit={handleProfileUpdate}
           isLoading={isProfileLoading}
           isSchoolLoading={isSchoolsLoading}
+          canLeaveGroup={canLeaveGroup}
+          onLeaveGroup={canLeaveGroup ? handleLeaveGroup : undefined}
+          leaveGroupLoading={removeGroupMemberMutation.isPending}
         />
 
         <Spacer size={32} />
