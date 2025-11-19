@@ -6,7 +6,7 @@ import { useSnackbar } from '@/hooks/useSnackbar';
 import { sendAudioForAnalysis } from '@/services/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Modal, Platform, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Switch } from 'react-native-paper';
@@ -22,15 +22,31 @@ export default function AudioInteractionScreen() {
   const recorderState = useAudioRecorderState(audioRecorder);
   const playerStatus = useAudioPlayerStatus(audioPlayer);
 
-  const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const params = useLocalSearchParams<{
+    sessionId?: string;
+    session_id?: string;
+    frequency?: string;
+    controller_text?: string;
+    feedback?: string;
+    session_completed?: string;
+  }>();
+
+  // Handle both sessionId (new session) and session_id (continued session)
+  const sessionId = params.sessionId || params.session_id;
   const navigation = useNavigation();
+  const router = useRouter();
   const { setShouldWarnBeforeNavigation, showWarningModal, confirmNavigation, cancelNavigation, setPendingNavigationFn } = useNavigationWarning();
 
-  const [feedbackText, setFeedbackText] = useState('Inicie comunicación con la torre de control. Presione el botón PTT para comenzar.');
-  const [controllerText, setControllerText] = useState('');
+  // Initialize state from params if continuing a session, otherwise use defaults
+  const [feedbackText, setFeedbackText] = useState(
+    params.feedback || 'Inicie comunicación con la torre de control. Presione el botón PTT para comenzar.'
+  );
+  const [controllerText, setControllerText] = useState(params.controller_text || '');
   const [displayedControllerText, setDisplayedControllerText] = useState('');
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  const [frequency, setFrequency] = useState(118.00);
+  const [frequency, setFrequency] = useState(
+    params.frequency ? parseFloat(params.frequency) : 118.00
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [inputFrequency, setInputFrequency] = useState('118.00');
   const [frequencyError, setFrequencyError] = useState('');
@@ -38,6 +54,7 @@ export default function AudioInteractionScreen() {
   const [settingsDrawerVisible, setSettingsDrawerVisible] = useState(false);
   const [enableAudioReview, setEnableAudioReview] = useState(true);
   const [silenceWarningShown, setSilenceWarningShown] = useState(false);
+  const [sessionCompletedModalVisible, setSessionCompletedModalVisible] = useState(false);
   const drawerAnimation = React.useRef(new Animated.Value(0)).current;
   const silenceCheckTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingNavigationAction = React.useRef<any>(null);
@@ -77,6 +94,13 @@ export default function AudioInteractionScreen() {
 
     return () => clearInterval(typingInterval);
   }, [controllerText]);
+
+  // Show notification when continuing a session
+  useEffect(() => {
+    if (params.session_id && params.controller_text) {
+      showSnackbar('Sesión reanudada exitosamente', 'success');
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -273,6 +297,12 @@ export default function AudioInteractionScreen() {
         await audioPlayer.play();
       }
       setIsLoadingResponse(false);
+
+      // Check if session is completed
+      if (response.session_completed === true) {
+        // Show completion modal
+        setSessionCompletedModalVisible(true);
+      }
     } catch (error: any) {
       setIsLoadingResponse(false);
       setRecordedAudioUri(null);
@@ -314,6 +344,21 @@ export default function AudioInteractionScreen() {
     setModalVisible(false);
   };
 
+  const handleGoToScores = () => {
+    setSessionCompletedModalVisible(false);
+    setShouldWarnBeforeNavigation(false);
+    router.replace('/(tabs)/ScoresTab');
+  };
+
+  const handleStartNewPractice = () => {
+    setSessionCompletedModalVisible(false);
+    setShouldWarnBeforeNavigation(false);
+    router.replace('/(tabs)/ATCTrainingTab');
+  };
+
+  // Extract last portion of UUID for display
+  const sessionIdSuffix = sessionId ? sessionId.split('-').pop()?.toUpperCase() : '';
+
   return (
 
     <ResponsiveLayout showTopNav={true} >
@@ -339,6 +384,14 @@ export default function AudioInteractionScreen() {
                 color: '#6B7280',
               }}>
                 Práctica activa
+              </ThemedText>
+              <ThemedText style={{
+                fontSize: 11,
+                fontWeight: '600',
+                color: '#777d86',
+                fontFamily: 'monospace',
+              }}>
+               - TID# {sessionIdSuffix}
               </ThemedText>
             </View>
             <TouchableOpacity
@@ -739,6 +792,86 @@ export default function AudioInteractionScreen() {
           </TouchableOpacity>
         )
       )}
+
+      {/* Session Completed Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={sessionCompletedModalVisible}
+        onRequestClose={() => setSessionCompletedModalVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 30,
+            width: '80%',
+            maxWidth: 400,
+            ...(Platform.OS === 'web' ? {
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+            } : {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 16
+            }),
+            elevation: 10
+          }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Icon type="MaterialIcons" name="check-circle" color="#10B981" size={64} />
+            </View>
+
+            <ThemedText style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#000' }}>
+              ¡Has completado el entrenamiento!
+            </ThemedText>
+
+            <ThemedText style={{ fontSize: 15, textAlign: 'center', marginBottom: 24, color: '#666', lineHeight: 22 }}>
+              Buen trabajo. Selecciona una opción para continuar:
+            </ThemedText>
+
+            <View style={{ gap: 12 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#2196F3',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  ...(Platform.OS === 'web' ? {
+                    boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)'
+                  } : {
+                    shadowColor: '#2196F3',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8
+                  }),
+                  elevation: 4
+                }}
+                onPress={handleGoToScores}
+              >
+                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+                  Ir a Calificaciones
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#fff',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  borderWidth: 2,
+                  borderColor: '#2196F3'
+                }}
+                onPress={handleStartNewPractice}
+              >
+                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#2196F3' }}>
+                  Iniciar Nueva Práctica
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <AppSnackbar visible={snackbar.visible} message={snackbar.message} type={snackbar.type} onDismiss={hideSnackbar} />
     </ResponsiveLayout>

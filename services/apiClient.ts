@@ -270,11 +270,13 @@ export const requestPasswordReset = async (email: string): Promise<SuccessRespon
 
 // Audio interaction function
 export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, frequency: string) => {
-  console.log('Preparing to send audio for analysis:');
-  console.log('sessionId:', sessionId);
-  console.log('frequency:', frequency);
-  console.log('audio file name:', 'recording.mp3');
-  console.log('audio file URI:', audioUri);
+  console.log('🎤 [AUDIO API] Preparing to send audio for analysis:');
+  console.log('🎤 [AUDIO API] Session ID:', sessionId);
+  console.log('🎤 [AUDIO API] Frequency:', frequency);
+  console.log('🎤 [AUDIO API] Audio file name:', 'recording.mp3');
+  console.log('🎤 [AUDIO API] Audio file URI:', audioUri);
+  console.log('🎤 [AUDIO API] Endpoint:', '/audio/analyze');
+  console.log('🎤 [AUDIO API] Full URL:', `${API_BASE_URL}/audio/analyze`);
 
   const formData = new FormData();
   formData.append('session_id', sessionId);
@@ -295,14 +297,33 @@ export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, 
     } as any);
   }
 
-  const response = await apiClient.post('/audio/analyze', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    timeout: 60000,
-  });
+  try {
+    const response = await apiClient.post('/audio/analyze', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000,
+    });
 
-  return response.data;
+    console.log('✅ [AUDIO API] Audio analysis completed successfully');
+    console.log('✅ [AUDIO API] Status:', response.status);
+    console.log('✅ [AUDIO API] Response data structure:');
+    console.log('✅ [AUDIO API] - session_id:', response.data.session_id);
+    console.log('✅ [AUDIO API] - frequency:', response.data.frequency);
+    console.log('✅ [AUDIO API] - audio_url:', response.data.audio_url);
+    console.log('✅ [AUDIO API] - controller_text:', response.data.controller_text);
+    console.log('✅ [AUDIO API] - feedback:', response.data.feedback);
+    console.log('✅ [AUDIO API] - session_completed:', response.data.session_completed);
+    console.log('✅ [AUDIO API] Full response:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [AUDIO API] Error analyzing audio');
+    console.error('❌ [AUDIO API] Error status:', error.response?.status);
+    console.error('❌ [AUDIO API] Error message:', error.message);
+    console.error('❌ [AUDIO API] Error response:', error.response?.data);
+    throw error;
+  }
 };
 
 // Create training context
@@ -347,6 +368,65 @@ export const getTrainingContextHistory = async (userId: string): Promise<Trainin
     console.error('❌ [HISTORY API] Error status:', error.response?.status);
     console.error('❌ [HISTORY API] Error message:', error.message);
     console.error('❌ [HISTORY API] Error response:', JSON.stringify(error.response?.data, null, 2));
+    throw error;
+  }
+};
+
+// Get last controller turn for a training session
+export interface LastControllerTurnResponse {
+  frequency: string;
+  controller_text: string;
+  feedback: string;
+  session_completed: boolean;
+}
+
+export const getLastControllerTurn = async (sessionId: string): Promise<LastControllerTurnResponse> => {
+  console.log('🔄 [TRAINING API] Fetching last controller turn');
+  console.log('🔄 [TRAINING API] Session ID:', sessionId);
+  console.log('🔄 [TRAINING API] Endpoint:', `/training_context/last-controller-turn/${sessionId}`);
+  console.log('🔄 [TRAINING API] Full URL:', `${API_BASE_URL}/training_context/last-controller-turn/${sessionId}`);
+
+  try {
+    const response = await apiClient.get<LastControllerTurnResponse>(`/training_context/last-controller-turn/${sessionId}`);
+
+    console.log('✅ [TRAINING API] Last controller turn fetched successfully');
+    console.log('✅ [TRAINING API] Status:', response.status);
+    console.log('✅ [TRAINING API] Session ID:', sessionId);
+    console.log('✅ [TRAINING API] Response:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [TRAINING API] Error fetching last controller turn');
+    console.error('❌ [TRAINING API] Session ID:', sessionId);
+    console.error('❌ [TRAINING API] Error status:', error.response?.status);
+    console.error('❌ [TRAINING API] Error message:', error.message);
+    console.error('❌ [TRAINING API] Error response:', error.response?.data);
+    throw error;
+  }
+};
+
+// Delete training session
+export const deleteTrainingSession = async (sessionId: string): Promise<SuccessResponse> => {
+  console.log('🗑️ [TRAINING API] Deleting training session');
+  console.log('🗑️ [TRAINING API] Session ID:', sessionId);
+  console.log('🗑️ [TRAINING API] Endpoint:', `/training_context/${sessionId}`);
+  console.log('🗑️ [TRAINING API] Full URL:', `${API_BASE_URL}/training_context/${sessionId}`);
+
+  try {
+    const response = await apiClient.delete<SuccessResponse>(`/training_context/${sessionId}`);
+
+    console.log('✅ [TRAINING API] Training session deleted successfully');
+    console.log('✅ [TRAINING API] Status:', response.status);
+    console.log('✅ [TRAINING API] Session ID:', sessionId);
+    console.log('✅ [TRAINING API] Response:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [TRAINING API] Error deleting training session');
+    console.error('❌ [TRAINING API] Session ID:', sessionId);
+    console.error('❌ [TRAINING API] Error status:', error.response?.status);
+    console.error('❌ [TRAINING API] Error message:', error.message);
+    console.error('❌ [TRAINING API] Error response:', error.response?.data);
     throw error;
   }
 };
