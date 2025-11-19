@@ -1,5 +1,4 @@
 import { GroupMembershipResponse, GroupResponse } from '@/interfaces/group';
-import { getGroupMembers } from '@/services/apiClient';
 import {
   useAddGroupMember,
   useCreateGroup,
@@ -10,10 +9,12 @@ import {
   useUpdateGroup,
 } from '@/query_hooks/useGroups';
 import { useCurrentUser, useStudentsBySchool } from '@/query_hooks/useUserProfile';
+import { getGroupMembers } from '@/services/apiClient';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   RefreshControl,
@@ -38,6 +39,7 @@ interface GroupFormState {
 export const InstructorDashboardScreen = () => {
   const { width } = useWindowDimensions();
   const isCompact = width < 640;
+  const router = useRouter();
 
   const {
     data: currentUser,
@@ -199,19 +201,33 @@ export const InstructorDashboardScreen = () => {
     ]);
   }, [refetchCurrentUser, refetchStudents, refetchGroups, schoolId]);
 
+  const navigateToStudentScores = (student: typeof students[number]) => {
+    router.push({
+      pathname: '/(tabs)/ScoresTab',
+      params: {
+        userId: student.id,
+        userName: `${student.firstName} ${student.lastName}`,
+      },
+    });
+  };
+
   const renderStudent = ({ item }: { item: typeof students[number] }) => (
     <View style={styles.studentCard}>
-      <Typography variant="h3" style={styles.studentName}>
-        {item.firstName} {item.lastName}
-      </Typography>
-      <Typography variant="body" style={styles.studentEmail}>
-        {item.email}
-      </Typography>
-      <Typography variant="caption" style={styles.studentMeta}>
-        {item.createdAt
-          ? `Registrado el ${new Date(item.createdAt).toLocaleDateString()}`
-          : 'Registro sin fecha'}
-      </Typography>
+      <View>
+        <Typography variant="h3" style={styles.studentName}>
+          {item.firstName} {item.lastName}
+        </Typography>
+        <Typography variant="body" style={styles.studentEmail}>
+          {item.email}
+        </Typography>
+      </View>
+      <View style={styles.studentButtonWrapper}>
+        <ActionButton
+          title="Ver evaluaciones"
+          variant="secondary"
+          onPress={() => navigateToStudentScores(item)}
+        />
+      </View>
     </View>
   );
 
@@ -876,6 +892,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     padding: 16,
     backgroundColor: '#F9FAFB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
   studentName: {
     fontWeight: '600',
@@ -885,6 +905,9 @@ const styles = StyleSheet.create({
   },
   studentMeta: {
     color: '#6B7280',
+  },
+  studentButtonWrapper: {
+    minWidth: 160,
   },
   emptyState: {
     alignItems: 'center',

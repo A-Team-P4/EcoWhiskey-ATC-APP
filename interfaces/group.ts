@@ -10,10 +10,13 @@ export interface GroupResponse {
   inviteOnly: boolean;
   schoolId?: string | null;
   instructorId: string;
+  ownerId?: string | number;
   memberCount?: number;
   createdAt: string;
   updatedAt?: string;
   school?: School | null;
+  membershipRole?: string;
+  membershipStatus?: string;
 }
 
 export interface GroupCreateRequest {

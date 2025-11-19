@@ -175,6 +175,12 @@ export const getGroups = async (
   return response.data;
 };
 
+export const getUserGroups = async (userId: string | number): Promise<GroupResponse[]> => {
+  const normalizedId = String(userId);
+  const response = await apiClient.get<GroupResponse[]>(`/groups/users/${normalizedId}`);
+  return response.data;
+};
+
 export const getGroupById = async (groupId: string): Promise<GroupResponse> => {
   const response = await apiClient.get<GroupResponse>(`/groups/${groupId}`);
   return response.data;
@@ -485,37 +491,45 @@ export const getPhaseScores = async (phaseId: string) => {
 };
 
 // Get scores for all phases in a single request
-export const getAllPhasesScores = async (phaseIds?: string[]) => {
-  console.log('📊 [SCORES API] Requesting all phases scores');
-  console.log('📊 [SCORES API] Phase IDs:', phaseIds);
+export const getAllPhasesScores = async (phaseIds?: string[], userId?: string) => {
+  console.log('dY"S [SCORES API] Requesting all phases scores');
+  console.log('dY"S [SCORES API] Phase IDs:', phaseIds);
+  console.log('dY"S [SCORES API] User ID:', userId);
 
-  const endpoint = phaseIds && phaseIds.length > 0
-    ? `/scores/phases?phase_ids=${phaseIds.join(',')}`
-    : '/scores/phases';
+  const params = new URLSearchParams();
+  if (phaseIds && phaseIds.length > 0) {
+    params.append('phase_ids', phaseIds.join(','));
+  }
+  if (userId) {
+    params.append('user_id', userId);
+  }
 
-  console.log('📊 [SCORES API] Endpoint:', endpoint);
-  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
+  const queryString = params.toString();
+  const endpoint = queryString ? `/scores/phases?${queryString}` : '/scores/phases';
+
+  console.log('dY"S [SCORES API] Endpoint:', endpoint);
+  console.log('dY"S [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
 
   try {
     const response = await apiClient.get(endpoint);
 
-    console.log('✅ [SCORES API] All phases scores response received');
-    console.log('✅ [SCORES API] Status:', response.status);
-    console.log('✅ [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
-    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('�o. [SCORES API] All phases scores response received');
+    console.log('�o. [SCORES API] Status:', response.status);
+    console.log('�o. [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
+    console.log('�o. [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching all phases scores');
-    console.error('❌ [SCORES API] Phase IDs:', phaseIds);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.error('�?O [SCORES API] Error fetching all phases scores');
+    console.error('�?O [SCORES API] Phase IDs:', phaseIds);
+    console.error('�?O [SCORES API] User ID:', userId);
+    console.error('�?O [SCORES API] Error status:', error.response?.status);
+    console.error('�?O [SCORES API] Error message:', error.message);
+    console.error('�?O [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
-
-// Get phase summary with LLM-generated feedback
+// Get phase summary// Get phase summary with LLM-generated feedback
 export const getPhaseSummary = async (phaseId: string) => {
   console.log('🤖 [SCORES API] Requesting phase summary with LLM analysis');
   console.log('🤖 [SCORES API] Phase ID:', phaseId);

@@ -20,7 +20,7 @@ import { useDeleteTrainingSession, useTrainingContextHistory } from '@/query_hoo
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { getLastControllerTurn } from '@/services/apiClient';
 import { SCENARIOS } from '@/utils/dropDowns';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 
 // Phase labels mapping based on the database phase_id values
 const PHASE_LABELS: Record<string, string> = {
@@ -222,8 +222,18 @@ const SessionCard = ({ session, onPress, onContinue, onDelete }: SessionCardProp
 
 export default function ScoresScreen() {
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
-  const userId = currentUser?.id;
   const router = useRouter();
+  const params = useLocalSearchParams<{ userId?: string; userName?: string }>();
+  const selectedUserId = typeof params.userId === 'string' ? params.userId : undefined;
+  const selectedUserName = typeof params.userName === 'string' ? params.userName : undefined;
+  const currentUserId = currentUser?.id;
+  const activeUserId = selectedUserId ?? currentUserId;
+  const viewingOtherUser = Boolean(selectedUserId && selectedUserId !== currentUserId);
+  const activeUserName = viewingOtherUser
+    ? selectedUserName ?? 'Estudiante'
+    : currentUser
+    ? `${currentUser.firstName} ${currentUser.lastName}`
+    : '';
 
   const [viewMode, setViewMode] = useState<'categories' | 'sessions'>('sessions');
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
@@ -236,14 +246,14 @@ export default function ScoresScreen() {
     data: history = [],
     isLoading: isHistoryLoading,
     refetch: refetchHistory,
-  } = useTrainingContextHistory(userId);
+  } = useTrainingContextHistory(activeUserId);
 
   // Fetch all phases scores in a single API call
   const {
     data: allPhasesData,
     isLoading: isPhasesLoading,
     refetch: refetchPhasesScores,
-  } = useAllPhasesScores(PHASE_IDS);
+  } = useAllPhasesScores({ phaseIds: PHASE_IDS, userId: activeUserId });
 
   // Delete training session mutation
   const deleteSessionMutation = useDeleteTrainingSession();
@@ -251,15 +261,17 @@ export default function ScoresScreen() {
   // Auto-refresh when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      if (userId) {
+      if (activeUserId) {
         refetchHistory();
         refetchPhasesScores();
       }
-    }, [userId, refetchHistory, refetchPhasesScores])
+    }, [activeUserId, refetchHistory, refetchPhasesScores])
   );
 
   // Manual refresh handler
   const handleRefresh = useCallback(async () => {
+    if (!activeUserId) return;
+
     setIsRefreshing(true);
     try {
       await Promise.all([refetchHistory(), refetchPhasesScores()]);
@@ -269,7 +281,7 @@ export default function ScoresScreen() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetchHistory, refetchPhasesScores, showSnackbar]);
+  }, [activeUserId, refetchHistory, refetchPhasesScores, showSnackbar]);
 
   const handlePhasePress = useCallback(
     (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
@@ -342,6 +354,10 @@ export default function ScoresScreen() {
   }, []);
 
   const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
+  const canManageSessions = !viewingOtherUser;
+  const clearSelectedUser = useCallback(() => {
+    router.replace('/(tabs)/ScoresTab');
+  }, [router]);
 
   return (
     <ResponsiveLayout showTopNav={true}>
@@ -371,8 +387,26 @@ export default function ScoresScreen() {
         <Spacer size={12} />
 
         <Typography variant="caption" style={styles.subtitle}>
-          Consulta tu desempeño en cada categoría de comunicación ATC.
+          {viewingOtherUser
+            ? 'Consulta el desempeno del estudiante seleccionado en cada categoria.'
+            : 'Consulta tu desempeno en cada categoria de comunicacion ATC.'}
         </Typography>
+
+        {viewingOtherUser && (
+          <>
+            <Spacer size={12} />
+            <View style={styles.viewerBanner}>
+              <View>
+                <Typography variant="caption" style={styles.viewerBannerLabel}>
+                  Estas supervisando a
+                </Typography>
+                <Typography variant="h3" style={styles.viewerBannerName}>
+                  {activeUserName}
+                </Typography>
+              </View>
+            </View>
+          </>
+        )}
 
         <Spacer size={24} />
 
@@ -452,11 +486,15 @@ export default function ScoresScreen() {
                 <Icon type="MaterialIcons" name="assignment-outlined" size={64} color="#9CA3AF" />
                 <Spacer size={16} />
                 <Typography variant="h3" style={styles.emptyTitle}>
-                  No tienes sesiones de entrenamiento
+                  {viewingOtherUser
+                    ? 'Este estudiante no tiene sesiones registradas'
+                    : 'No tienes sesiones de entrenamiento'}
                 </Typography>
                 <Spacer size={8} />
                 <Typography variant="body" style={styles.emptyText}>
-                  Completa tu primera sesión de práctica ATC para ver tus calificaciones aquí.
+                  {viewingOtherUser
+                    ? 'Aun no registramos sesiones para este estudiante.'
+                    : 'Completa tu primera sesion de practica ATC para ver tus calificaciones aqui.'}
                 </Typography>
               </View>
             ) : (
@@ -466,8 +504,8 @@ export default function ScoresScreen() {
                     <SessionCard
                       session={session}
                       onPress={handleSessionPress}
-                      onContinue={handleContinueSession}
-                      onDelete={handleDeleteSession}
+                      onContinue={canManageSessions ? handleContinueSession : undefined}
+                      onDelete={canManageSessions ? handleDeleteSession : undefined}
                     />
                     <Spacer size={12} />
                   </React.Fragment>
@@ -561,6 +599,40 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     opacity: 0.7,
+  },
+  viewerBanner: {
+    backgroundColor: '#E0E7FF',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  viewerBannerLabel: {
+    fontSize: 12,
+    color: '#1E3A8A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  viewerBannerName: {
+    color: '#1E40AF',
+    fontWeight: '600',
+  },
+  viewerBannerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#2563EB',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+  },
+  viewerBannerButtonText: {
+    color: '#2563EB',
+    fontWeight: '600',
   },
   toggleContainer: {
     flexDirection: 'row',

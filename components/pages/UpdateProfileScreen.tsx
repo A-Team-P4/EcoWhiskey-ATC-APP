@@ -7,7 +7,7 @@ import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
-import { useRemoveGroupMember } from '@/query_hooks/useGroups';
+import { useGroupsByUser, useRemoveGroupMember } from '@/query_hooks/useGroups';
 import {
   CURRENT_USER_QUERY_KEY,
   useChangeUserPassword,
@@ -47,13 +47,28 @@ function UpdateProfileScreen() {
   const updateUserSchoolMutation = useUpdateUserSchool();
   const changeUserPasswordMutation = useChangeUserPassword();
   const removeGroupMemberMutation = useRemoveGroupMember();
+  const cachedUser = queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null;
+  const resolvedUser = currentUser ?? cachedUser ?? null;
+  const targetUserId = resolvedUser?.id;
+  const {
+    data: userGroups = [],
+    isLoading: isUserGroupsLoading,
+    isFetching: isUserGroupsFetching,
+  } = useGroupsByUser(targetUserId, { enabled: Boolean(targetUserId) });
+  const hasAssignedGroups = (userGroups?.length ?? 0) > 0;
+  const shouldLockSchoolSelection =
+    (resolvedUser?.accountType === 'instructor') || hasAssignedGroups;
+  const schoolLockReason =
+    resolvedUser?.accountType === 'instructor'
+      ? 'Los instructores no pueden cambiar su escuela.'
+      : hasAssignedGroups
+        ? 'No puedes cambiar de escuela mientras perteneces a un grupo.'
+        : undefined;
 
   const profileMutationPending =
     updateUserProfileMutation.isPending || updateUserSchoolMutation.isPending;
   const isProfileLoading = profileMutationPending || isUserLoading;
-
-  const resolvedUser =
-    currentUser ?? queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null;
+  const isUserGroupsPending = isUserGroupsLoading || isUserGroupsFetching;
 
   const isPasswordLoading = changeUserPasswordMutation.isPending;
   const shouldShowLoading = (isUserLoading || isUserFetching) && !resolvedUser;
@@ -67,6 +82,16 @@ function UpdateProfileScreen() {
       Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
       return;
     }
+
+    const lockForInstructor = latestUser.accountType === 'instructor';
+    const lockForGroups = hasAssignedGroups;
+    const lockSchoolSelection = lockForInstructor || lockForGroups;
+    const lockReasonMessage =
+      lockForInstructor
+        ? 'Los instructores no pueden cambiar su escuela.'
+        : lockForGroups
+          ? 'No puedes cambiar de escuela mientras perteneces a un grupo.'
+          : undefined;
 
     const profileChanges: UpdateUserPayload = {};
 
@@ -89,6 +114,15 @@ function UpdateProfileScreen() {
       updatePromises.push(
         updateUserProfileMutation.mutateAsync({ userId, payload: profileChanges })
       );
+    }
+
+    if (
+      lockSchoolSelection &&
+      data.schoolId &&
+      data.schoolId !== (latestUser.school?.id ?? '')
+    ) {
+      Alert.alert('Cambio no permitido', lockReasonMessage ?? 'No puedes modificar la escuela.');
+      return;
     }
 
     if (data.schoolId && data.schoolId !== (latestUser.school?.id ?? '')) {
@@ -228,6 +262,10 @@ function UpdateProfileScreen() {
           onSubmit={handleProfileUpdate}
           isLoading={isProfileLoading}
           isSchoolLoading={isSchoolsLoading}
+          userGroups={userGroups}
+          isGroupsLoading={isUserGroupsPending}
+          lockSchoolSelection={shouldLockSchoolSelection}
+          lockSchoolReason={schoolLockReason}
           canLeaveGroup={canLeaveGroup}
           onLeaveGroup={canLeaveGroup ? handleLeaveGroup : undefined}
           leaveGroupLoading={removeGroupMemberMutation.isPending}

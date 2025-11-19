@@ -17,6 +17,7 @@ import {
   getGroupById,
   getGroupMembers,
   getGroups,
+  getUserGroups,
   removeGroupMember,
   updateGroup,
 } from '@/services/apiClient';
@@ -29,6 +30,8 @@ export const GROUPS_QUERY_KEY = (params?: GroupListParams) =>
 export const GROUP_QUERY_KEY = (groupId: string) => ['groups', groupId] as const;
 export const GROUP_MEMBERS_QUERY_KEY = (groupId: string) =>
   ['groups', groupId, 'members'] as const;
+export const GROUPS_BY_USER_QUERY_KEY = (userId: string | number) =>
+  ['groups', 'users', String(userId)] as const;
 
 const useCanManageGroups = () => {
   const { data: currentUser } = useCurrentUser();
@@ -84,6 +87,13 @@ export const useGroupMembers = (groupId?: string) =>
     queryKey: groupId ? GROUP_MEMBERS_QUERY_KEY(groupId) : ['groups', 'members', 'detail'],
     queryFn: () => getGroupMembers(groupId as string),
     enabled: Boolean(groupId),
+  });
+
+export const useGroupsByUser = (userId?: string | number, options?: UseGroupsOptions) =>
+  useQuery<GroupResponse[]>({
+    queryKey: userId ? GROUPS_BY_USER_QUERY_KEY(userId) : ['groups', 'users', 'detail'],
+    queryFn: () => getUserGroups(userId as string | number),
+    enabled: Boolean(userId) && (options?.enabled ?? true),
   });
 
 export const useCreateGroup = () => {

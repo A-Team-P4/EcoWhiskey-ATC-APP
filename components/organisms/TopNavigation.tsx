@@ -14,8 +14,8 @@ import { Avatar } from 'react-native-paper';
 import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
-import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
+import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'expo-router';
 
@@ -33,6 +33,8 @@ export const TopNavigation: React.FC = () => {
   const isATCActive = pathname.includes('ATCTrainingTab');
   const isScoresActive = pathname.includes('ScoresTab');
   const isUserProfileTab = pathname.includes('UserProfileTab');
+  const isInstructor = user?.accountType === 'instructor';
+  const isInstructorDashboardActive = pathname.includes('instructor-dashboard');
 
   const getInitials = () => {
     if (!user?.firstName || !user?.lastName) return '?';
@@ -88,6 +90,13 @@ export const TopNavigation: React.FC = () => {
     setShowAccountMenu(false);
     requestNavigation(() => {
       router.push('/(tabs)/ScoresTab');
+    });
+  };
+
+  const handleInstructorDashboardPress = () => {
+    setShowAccountMenu(false);
+    requestNavigation(() => {
+      router.push('/instructor-dashboard');
     });
   };
 
@@ -174,7 +183,15 @@ export const TopNavigation: React.FC = () => {
                   size={20}
                   color={isATCActive ? '#2196F3' : '#666'}
                 />
-                <ThemedText style={[ styles.webTabLabel, { fontWeight: isATCActive ? '600' : '400', color: isATCActive ? '#2196F3' : '#666',  }, ]} >
+                <ThemedText
+                  style={[
+                    styles.webTabLabel,
+                    {
+                      fontWeight: isATCActive ? '600' : '400',
+                      color: isATCActive ? '#2196F3' : '#666',
+                    },
+                  ]}
+                >
                   ATC Practice
                 </ThemedText>
               </View>
@@ -195,13 +212,50 @@ export const TopNavigation: React.FC = () => {
                   size={20}
                   color={isScoresActive ? '#2196F3' : '#666'}
                 />
-               <ThemedText style={[ styles.webTabLabel, { fontWeight: isScoresActive ? '600' : '400', color: isScoresActive ? '#2196F3' : '#666',  }, ]} >
+                <ThemedText
+                  style={[
+                    styles.webTabLabel,
+                    {
+                      fontWeight: isScoresActive ? '600' : '400',
+                      color: isScoresActive ? '#2196F3' : '#666',
+                    },
+                  ]}
+                >
                   Evaluación
                 </ThemedText>
               </View>
             </TouchableOpacity>
 
-           
+            {isInstructor && (
+              <TouchableOpacity
+                onPress={handleInstructorDashboardPress}
+                activeOpacity={0.7}
+                style={[
+                  styles.webTabButton,
+                  { borderBottomColor: isInstructorDashboardActive ? '#2196F3' : 'transparent' },
+                ]}
+              >
+                <View style={styles.webTabContent}>
+                  <Icon
+                    type='MaterialIcons'
+                    name='dashboard'
+                    size={20}
+                    color={isInstructorDashboardActive ? '#2196F3' : '#666'}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.webTabLabel,
+                      {
+                        fontWeight: isInstructorDashboardActive ? '600' : '400',
+                        color: isInstructorDashboardActive ? '#2196F3' : '#666',
+                      },
+                    ]}
+                  >
+                    Panel instructor
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
