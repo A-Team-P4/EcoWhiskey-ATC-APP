@@ -15,6 +15,7 @@ import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'expo-router';
 
@@ -58,6 +59,7 @@ export const TopNavigation: React.FC = () => {
     try {
       // Remove all auth-related data from AsyncStorage
       await AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+      notifyAuthTokenChange(false);
 
       // Clear React Query cache
       queryClient.clear();

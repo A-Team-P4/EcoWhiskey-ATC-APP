@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { subscribeToAuthTokenChanges } from '@/lib/authTokenEvents';
 
 import {
   changeUserPassword,
@@ -97,9 +98,15 @@ const useHasAuthToken = () => {
     };
 
     checkToken();
+    const unsubscribe = subscribeToAuthTokenChanges((hasTokenValue) => {
+      if (isMounted) {
+        setHasToken(hasTokenValue);
+      }
+    });
 
     return () => {
       isMounted = false;
+      unsubscribe();
     };
   }, []);
 

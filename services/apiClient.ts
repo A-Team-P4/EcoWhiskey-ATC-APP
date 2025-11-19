@@ -11,6 +11,7 @@ import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import {
   AuthResponse,
   ChangePasswordPayload,
@@ -84,18 +85,24 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     if (__DEV__) {
       console.error(` ERROR API:`, error.response?.data || error.message);
       if (error.message === 'Network Error') {
-        console.error(`🔌 Network Error - Check if backend is running at ${API_BASE_URL}`);
+        console.error(`dY"O Network Error - Check if backend is running at ${API_BASE_URL}`);
       }
     }
 
     // Handle common errors
     if (error.response?.status === 401) {
       // Token expired or invalid - clear all auth data
-      AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+      try {
+        await AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+      } catch (storageError) {
+        console.warn('Failed to clear auth data after 401', storageError);
+      } finally {
+        notifyAuthTokenChange(false);
+      }
     }
 
     return Promise.reject(error);
