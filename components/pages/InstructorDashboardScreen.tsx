@@ -641,6 +641,7 @@ export const InstructorDashboardScreen = () => {
                     : 'Selecciona estudiantes para agregarlos'
                 }
                 error={membersModalError ?? undefined}
+                leftIconName="person-add"
               />
               <ActionButton
                 title="Agregar seleccionados"
