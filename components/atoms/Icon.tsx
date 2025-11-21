@@ -1,16 +1,37 @@
-
-import * as IconSets from '@expo/vector-icons';
+// components/atoms/Icon.tsx
+import {
+  Entypo,
+  FontAwesome5,
+  Foundation,
+  Ionicons,
+  MaterialCommunityIcons,
+  MaterialIcons
+} from '@expo/vector-icons';
 import React from 'react';
-import { GestureResponderEvent, TouchableOpacity, ViewStyle } from 'react-native';
+import { GestureResponderEvent, Text as RNText, TouchableOpacity, ViewStyle } from 'react-native';
+
+
+
+const IconMap = {
+  MaterialIcons,
+  Ionicons,
+  Foundation,
+  MaterialCommunityIcons,
+  FontAwesome5,
+  Entypo
+} as const;
+
+
+type IconSetName = keyof typeof IconMap;
 
 interface IconProps {
   name: string;
   size?: number;
   color?: string;
-  type?: keyof typeof IconSets; // any icon set exported by @expo/vector-icons
-  onPress?: (event: GestureResponderEvent) => void; // optional press handler
-  disabled?: boolean; // optional disabled state
-  style?: ViewStyle; // optional additional style
+  type?: IconSetName;
+  onPress?: (event: GestureResponderEvent) => void;
+  disabled?: boolean;
+  style?: ViewStyle;
 }
 
 export const Icon: React.FC<IconProps> = ({
@@ -22,14 +43,20 @@ export const Icon: React.FC<IconProps> = ({
   disabled = false,
   style,
 }) => {
-  const IconComponent = IconSets[type] as any;
+  const Pack = IconMap[type];
 
-  if (!IconComponent) {
-    console.warn(`Icon set "${type}" not found. Falling back to Ionicons.`);
-    return <IconSets.Ionicons name={name as any} size={size} color={color} />;
+  // Si el set no existe (no debería pasar porque limitamos IconSetName), fallback seguro:
+  if (!Pack) {
+    return <RNText accessibilityLabel="icon-pack-missing">?</RNText>;
   }
 
-  const iconElement = <IconComponent name={name as any} size={size} color={color} />;
+  let element: React.ReactNode;
+  try {
+    // @ts-ignore: confiar en runtime; si "name" es inválido, el try/catch nos salva
+    element = <Pack name={name as any} size={size} color={color} />;
+  } catch {
+    element = <RNText accessibilityLabel={`icon-${type}-${name}-missing`}>?</RNText>;
+  }
 
   if (onPress) {
     return (
@@ -38,11 +65,10 @@ export const Icon: React.FC<IconProps> = ({
         activeOpacity={0.7}
         style={[style, disabled && { opacity: 0.4 }]}
       >
-        {iconElement}
+        {element}
       </TouchableOpacity>
     );
   }
 
-  return iconElement;
+  return <>{element}</>;
 };
-

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Checkbox, Divider, Surface, TextInput } from 'react-native-paper';
+import { Divider, Surface, TextInput } from 'react-native-paper';
 import { Icon } from '../atoms/Icon';
 import { Typography } from '../atoms/Typography';
 
@@ -17,7 +17,10 @@ interface MultiSelectDropdownProps {
   error?: string;
   required?: boolean;
   placeholder?: string;
-  searchable?: boolean;
+  leftIconName?: string;
+  leftIconType?: React.ComponentProps<typeof Icon>['type'];
+  leftIconColor?: string;
+  disabled?: boolean;
 }
 
 export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
@@ -28,30 +31,19 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   error,
   required = false,
   placeholder = "Selecciona opciones",
-  searchable = true
+  leftIconName,
+  leftIconType = 'MaterialIcons',
+  leftIconColor,
+  disabled = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
 
   const displayLabel = required ? `${label} *` : label;
   const selectedOptions = options.filter(option => values.includes(option.value));
   const displayValue = selectedOptions.length > 0
     ? `${selectedOptions.length} seleccionado${selectedOptions.length > 1 ? 's' : ''}`
     : '';
-
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    if (text === '') {
-      setFilteredOptions(options);
-    } else {
-      const filtered = options.filter(option =>
-        option.label.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredOptions(filtered);
-    }
-  };
 
   const toggleSelection = (optionValue: string) => {
     const newValues = values.includes(optionValue)
@@ -61,36 +53,40 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   };
 
   const openDropdown = () => {
+    if (disabled) {
+      return;
+    }
     setIsVisible(true);
     setIsFocused(true);
-    setFilteredOptions(options);
   };
 
   const closeDropdown = () => {
     setIsVisible(false);
     setIsFocused(false);
-    setSearchText('');
-    setFilteredOptions(options);
   };
 
-  const renderOption = ({ item }: { item: DropdownOption }) => (
-    <TouchableOpacity
-      style={[
-        styles.optionItem,
-        values.includes(item.value) && styles.optionItemSelected
-      ]}
-      onPress={() => toggleSelection(item.value)}
-    >
-      <Checkbox
-        status={values.includes(item.value) ? 'checked' : 'unchecked'}
+  const renderOption = ({ item }: { item: DropdownOption }) => {
+    const isSelected = values.includes(item.value);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.optionItem,
+          isSelected && styles.optionItemSelected
+        ]}
         onPress={() => toggleSelection(item.value)}
-        color="#2196F3"
-      />
-      <Typography variant="body" style={styles.optionText}>
-        {item.label}
-      </Typography>
-    </TouchableOpacity>
-  );
+      >
+        <Icon
+          type="MaterialIcons"
+          name={isSelected ? 'check-box' : 'check-box-outline-blank'}
+          size={24}
+          color={isSelected ? '#2196F3' : '#9CA3AF'}
+        />
+        <Typography variant="body" style={styles.optionText}>
+          {item.label}
+        </Typography>
+      </TouchableOpacity>
+    );
+  };
 
   const customTheme = {
     colors: {
@@ -100,14 +96,22 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     },
   };
 
+  const iconColor = disabled ? '#C7C7CC' : '#000';
+  const resolvedIconColor = leftIconColor ?? iconColor;
+  const chevronColor = disabled ? '#C7C7CC' : '#2196F3';
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={openDropdown}>
+      <TouchableOpacity onPress={openDropdown} disabled={disabled}>
         <TextInput
           theme={customTheme}
           label={displayLabel}
           value={displayValue}
-          style={[styles.input, isFocused && styles.inputFocused]}
+          style={[
+            styles.input,
+            isFocused && styles.inputFocused,
+            disabled && styles.inputDisabled,
+          ]}
           contentStyle={styles.inputContent}
           outlineStyle={[
             styles.inputOutline,
@@ -118,11 +122,39 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           mode="outlined"
           editable={false}
           placeholder={placeholder}
+          left={
+            leftIconName
+              ? (
+                <TextInput.Icon
+                  icon={() => (
+                    <Icon
+                      name={leftIconName}
+                      type={leftIconType}
+                      size={22}
+                      color={resolvedIconColor}
+                    />
+                  )}
+                />
+              )
+              : undefined
+          }
           right={
             <TextInput.Icon
-              icon={isVisible ? "chevron-up" : "chevron-down"}
+              icon={() => (
+                <View style={styles.dropdownIndicator}>
+                  <View style={styles.dropdownIndicatorLine} />
+                  <Icon
+                    type="Entypo"
+                    name={isVisible ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={chevronColor}
+                  />
+                  <View style={styles.dropdownIndicatorLine} />
+                </View>
+              )}
               onPress={openDropdown}
-              color="#2196F3"
+              forceTextInputFocus={false}
+              disabled={disabled}
             />
           }
         />
@@ -157,21 +189,6 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
               <Divider />
 
-              {/* Search Input (if searchable) */}
-              {searchable && (
-                <View style={styles.searchContainer}>
-                  <TextInput
-                    placeholder="Buscar..."
-                    value={searchText}
-                    onChangeText={handleSearch}
-                    style={styles.searchInput}
-                    mode="outlined"
-                    dense
-                    left={<TextInput.Icon icon="magnify" color="#8E8E93" />}
-                  />
-                </View>
-              )}
-
               {/* Selected Count */}
               {values.length > 0 && (
                 <View style={styles.selectedCountContainer}>
@@ -183,7 +200,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
               {/* Options List */}
               <FlatList
-                data={filteredOptions}
+                data={options}
                 renderItem={renderOption}
                 keyExtractor={(item) => item.value}
                 style={styles.optionsList}
@@ -191,7 +208,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
                     <Typography variant="body" style={styles.emptyText}>
-                      {searchText ? 'No se encontraron resultados' : 'No hay opciones disponibles'}
+                      No hay opciones disponibles
                     </Typography>
                   </View>
                 }
@@ -224,6 +241,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
   },
+  inputDisabled: {
+    opacity: 0.6,
+  },
   inputFocused: {
     // backgroundColor: '#FFFFFF',
   },
@@ -239,6 +259,17 @@ const styles = StyleSheet.create({
   },
   inputOutlineError: {
     borderColor: '#FF3B30',
+  },
+  dropdownIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 6,
+  },
+  dropdownIndicatorLine: {
+    width: 1,
+    height: 14,
+    backgroundColor: '#E5E5EA',
   },
   helperTextContainer: {
     minHeight: 20,
@@ -276,13 +307,6 @@ const styles = StyleSheet.create({
   dropdownTitle: {
     fontWeight: '600',
     color: '#1C1C1E',
-  },
-  searchContainer: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  searchInput: {
-    backgroundColor: '#FFFFFF',
   },
   selectedCountContainer: {
     paddingHorizontal: 16,

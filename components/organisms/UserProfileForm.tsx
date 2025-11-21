@@ -1,3 +1,4 @@
+import { GroupResponse } from '@/interfaces/group';
 import { School, User } from '@/interfaces/user';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -23,7 +24,10 @@ interface FormErrors {
   school?: string;
 }
 
-type UserProfileData = Pick<User, 'firstName' | 'lastName' | 'email' | 'accountType' | 'school' | 'photo'>;
+type UserProfileData = Pick<
+  User,
+  'firstName' | 'lastName' | 'email' | 'accountType' | 'school' | 'photo' | 'group'
+>;
 
 type ProfileFormSubmitPayload = {
   firstName?: string;
@@ -35,16 +39,30 @@ type ProfileFormSubmitPayload = {
 interface UserProfileFormProps {
   userData: UserProfileData;
   schools: School[];
+  userGroups?: GroupResponse[];
   onSubmit: (data: ProfileFormSubmitPayload) => Promise<void>;
   isLoading?: boolean;
   isSchoolLoading?: boolean;
+  isGroupsLoading?: boolean;
+  lockSchoolSelection?: boolean;
+  lockSchoolReason?: string;
+  canLeaveGroup?: boolean;
+  onLeaveGroup?: () => Promise<void> | void;
+  leaveGroupLoading?: boolean;
 }
 export const UserProfileForm: React.FC<UserProfileFormProps> = ({
   userData,
   schools,
+  userGroups,
   onSubmit,
   isLoading = false,
-  isSchoolLoading = false
+  isSchoolLoading = false,
+  isGroupsLoading = false,
+  lockSchoolSelection = false,
+  lockSchoolReason,
+  canLeaveGroup = false,
+  onLeaveGroup,
+  leaveGroupLoading = false,
 }) => {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -58,6 +76,13 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
   const [photoPayload, setPhotoPayload] = useState<string | null | undefined>(undefined);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSelectingPhoto, setIsSelectingPhoto] = useState(false);
+  const normalizedGroups = userGroups ?? [];
+
+  const formatMembershipText = (label?: string) => {
+    if (!label) return null;
+    const normalized = label.toLowerCase();
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  };
 
   const schoolOptions = useMemo(() => {
     const baseOptions = schools.map((school) => ({
@@ -85,7 +110,9 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
   const disableSubmit =
     isLoading ||
-    (userData.accountType === 'instructor' && (isSchoolLoading || schoolOptions.length === 0));
+    (!lockSchoolSelection &&
+      userData.accountType === 'instructor' &&
+      (isSchoolLoading || schoolOptions.length === 0));
 
   useEffect(() => {
     setFirstName(userData.firstName);
@@ -296,6 +323,60 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {userData.accountType === 'student' ? 'Estudiante' : 'Instructor'}
           </Typography>
         </View>
+
+        <View style={formStyles.infoRow}>
+          <Typography variant="caption" style={formStyles.infoLabel}>
+            Escuela actual
+          </Typography>
+          <Typography variant="body" style={formStyles.infoValue}>
+            {userData.school?.name ?? 'Sin escuela asignada'}
+          </Typography>
+        </View>
+
+        <View style={formStyles.infoRow}>
+          <Typography variant="caption" style={formStyles.infoLabel}>
+            Grupos asignados
+          </Typography>
+          {isGroupsLoading ? (
+            <Typography variant="body" style={formStyles.infoValue}>
+              Cargando grupos...
+            </Typography>
+          ) : normalizedGroups.length > 0 ? (
+            <View style={formStyles.groupListContainer}>
+              {normalizedGroups.map((group) => (
+                <View key={group.id} style={formStyles.groupListItem}>
+                  <Typography variant="body" style={formStyles.infoValue}>
+                    {group.name}
+                  </Typography>
+                  {group.description ? (
+                    <Typography variant="caption" style={formStyles.groupDescription}>
+                      {group.description}
+                    </Typography>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Typography variant="body" style={formStyles.infoValue}>
+              Sin grupos asignados
+            </Typography>
+          )}
+          {canLeaveGroup && onLeaveGroup ? (
+            <View style={formStyles.leaveGroupContainer}>
+              <ActionButton
+                title={leaveGroupLoading ? 'Saliendo...' : 'Salir del grupo'}
+                variant="outline"
+                onPress={onLeaveGroup}
+                loading={leaveGroupLoading}
+                disabled={leaveGroupLoading || isLoading}
+                iconName="logout"
+              />
+              <Typography variant="caption" style={formStyles.leaveGroupHint}>
+                No eres el owner; puedes abandonar el grupo cuando lo necesites.
+              </Typography>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <Spacer size={24} />
@@ -340,8 +421,14 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
           placeholder={schoolPlaceholder}
           enableFocusControl
           leftIconName="school"
-          disabled={isSchoolLoading || schoolOptions.length === 0}
+          disabled={lockSchoolSelection || isSchoolLoading || schoolOptions.length === 0}
         />
+        {lockSchoolSelection && (
+          <Typography variant="caption" style={formStyles.schoolLockMessage}>
+            {lockSchoolReason ??
+              'No puedes modificar tu escuela debido a tu rol o participacion en grupos.'}
+          </Typography>
+        )}
       </View>
 
       <Spacer size={32} />
@@ -428,6 +515,37 @@ const formStyles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
+  },
+  groupDescription: {
+    fontSize: 14,
+    color: '#4B5563',
+  },
+  schoolLockMessage: {
+    marginTop: 8,
+    color: '#DC2626',
+  },
+  groupListContainer: {
+    width: '100%',
+    gap: 12,
+    marginTop: 8,
+  },
+  groupListItem: {
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderRadius: 8,
+    padding: 12,
+    gap: 4,
+    backgroundColor: '#fff',
+  },
+  groupMeta: {
+    color: '#6B7280',
+  },
+  leaveGroupContainer: {
+    marginTop: 8,
+    gap: 4,
+  },
+  leaveGroupHint: {
+    color: '#6B7280',
   },
   formFields: {
     gap: 16,

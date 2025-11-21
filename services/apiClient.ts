@@ -1,14 +1,25 @@
 // services/api.ts
+import {
+  GroupCreateRequest,
+  GroupListParams,
+  GroupMemberAddRequest,
+  GroupMembershipResponse,
+  GroupResponse,
+  GroupUpdateRequest,
+} from '@/interfaces/group';
 import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import {
   AuthResponse,
   ChangePasswordPayload,
   LoginCredentials,
   RegistrationData,
+  SchoolCreateRequest,
   SchoolResponse,
+  SchoolUpdateRequest,
   SchoolsResponse,
   SuccessResponse,
   UpdateUserPayload,
@@ -74,18 +85,24 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     if (__DEV__) {
       console.error(` ERROR API:`, error.response?.data || error.message);
       if (error.message === 'Network Error') {
-        console.error(`🔌 Network Error - Check if backend is running at ${API_BASE_URL}`);
+        console.error(`dY"O Network Error - Check if backend is running at ${API_BASE_URL}`);
       }
     }
 
     // Handle common errors
     if (error.response?.status === 401) {
       // Token expired or invalid - clear all auth data
-      AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+      try {
+        await AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
+      } catch (storageError) {
+        console.warn('Failed to clear auth data after 401', storageError);
+      } finally {
+        notifyAuthTokenChange(false);
+      }
     }
 
     return Promise.reject(error);
@@ -121,6 +138,111 @@ export const getSchools = async (): Promise<SchoolsResponse> => {
 
 export const getSchoolById = async (schoolId: string): Promise<SchoolResponse> => {
   const response = await apiClient.get<SchoolResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const getStudentsBySchool = async (
+  schoolId: string | number
+): Promise<User[]> => {
+  const response = await apiClient.get<User[]>(`/schools/${schoolId}/students`);
+  return response.data;
+};
+
+export const createSchool = async (
+  payload: SchoolCreateRequest
+): Promise<SchoolResponse> => {
+  const response = await apiClient.post<SchoolResponse>('/schools', payload);
+  return response.data;
+};
+
+export const updateSchool = async (
+  schoolId: string,
+  payload: SchoolUpdateRequest
+): Promise<SchoolResponse> => {
+  const response = await apiClient.patch<SchoolResponse>(`/schools/${schoolId}`, payload);
+  return response.data;
+};
+
+export const deleteSchool = async (schoolId: string): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(`/schools/${schoolId}`);
+  return response.data;
+};
+
+export const getGroups = async (
+  params?: GroupListParams
+): Promise<GroupResponse[]> => {
+  const response = await apiClient.get<GroupResponse[]>('/groups', { params });
+  return response.data;
+};
+
+export const getUserGroups = async (userId: string | number): Promise<GroupResponse[]> => {
+  const normalizedId = String(userId);
+  const response = await apiClient.get<GroupResponse[]>(`/groups/users/${normalizedId}`);
+  return response.data;
+};
+
+export const getGroupById = async (groupId: string): Promise<GroupResponse> => {
+  const response = await apiClient.get<GroupResponse>(`/groups/${groupId}`);
+  return response.data;
+};
+
+export const createGroup = async (
+  payload: GroupCreateRequest
+): Promise<GroupResponse> => {
+  const response = await apiClient.post<GroupResponse>('/groups', payload);
+  return response.data;
+};
+
+export const updateGroup = async (
+  groupId: string,
+  payload: GroupUpdateRequest
+): Promise<GroupResponse> => {
+  const response = await apiClient.patch<GroupResponse>(`/groups/${groupId}`, payload);
+  return response.data;
+};
+
+export const deleteGroup = async (groupId: string): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(`/groups/${groupId}`);
+  return response.data;
+};
+
+export const getGroupMembers = async (
+  groupId: string
+): Promise<GroupMembershipResponse[]> => {
+  const response = await apiClient.get<GroupMembershipResponse[]>(
+    `/groups/${groupId}/members`
+  );
+  return response.data;
+};
+
+export const addGroupMember = async (
+  groupId: string,
+  payload: GroupMemberAddRequest
+): Promise<GroupMembershipResponse> => {
+  const response = await apiClient.post<GroupMembershipResponse>(
+    `/groups/${groupId}/members`,
+    payload
+  );
+  return response.data;
+};
+
+export const acceptGroupMembership = async (
+  groupId: string,
+  membershipId: string
+): Promise<GroupMembershipResponse> => {
+  const response = await apiClient.post<GroupMembershipResponse>(
+    `/groups/${groupId}/memberships/${membershipId}/accept`
+  );
+  return response.data;
+};
+
+export const removeGroupMember = async (
+  groupId: string,
+  userId: string
+): Promise<SuccessResponse> => {
+  const response = await apiClient.delete<SuccessResponse>(
+    `/groups/${groupId}/members/${userId}`
+  );
   return response.data;
 };
 
@@ -369,37 +491,45 @@ export const getPhaseScores = async (phaseId: string) => {
 };
 
 // Get scores for all phases in a single request
-export const getAllPhasesScores = async (phaseIds?: string[]) => {
-  console.log('📊 [SCORES API] Requesting all phases scores');
-  console.log('📊 [SCORES API] Phase IDs:', phaseIds);
+export const getAllPhasesScores = async (phaseIds?: string[], userId?: string) => {
+  console.log('dY"S [SCORES API] Requesting all phases scores');
+  console.log('dY"S [SCORES API] Phase IDs:', phaseIds);
+  console.log('dY"S [SCORES API] User ID:', userId);
 
-  const endpoint = phaseIds && phaseIds.length > 0
-    ? `/scores/phases?phase_ids=${phaseIds.join(',')}`
-    : '/scores/phases';
+  const params = new URLSearchParams();
+  if (phaseIds && phaseIds.length > 0) {
+    params.append('phase_ids', phaseIds.join(','));
+  }
+  if (userId) {
+    params.append('user_id', userId);
+  }
 
-  console.log('📊 [SCORES API] Endpoint:', endpoint);
-  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
+  const queryString = params.toString();
+  const endpoint = queryString ? `/scores/phases?${queryString}` : '/scores/phases';
+
+  console.log('dY"S [SCORES API] Endpoint:', endpoint);
+  console.log('dY"S [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
 
   try {
     const response = await apiClient.get(endpoint);
 
-    console.log('✅ [SCORES API] All phases scores response received');
-    console.log('✅ [SCORES API] Status:', response.status);
-    console.log('✅ [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
-    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('�o. [SCORES API] All phases scores response received');
+    console.log('�o. [SCORES API] Status:', response.status);
+    console.log('�o. [SCORES API] Phases count:', Object.keys(response.data?.phases || {}).length);
+    console.log('�o. [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching all phases scores');
-    console.error('❌ [SCORES API] Phase IDs:', phaseIds);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.error('�?O [SCORES API] Error fetching all phases scores');
+    console.error('�?O [SCORES API] Phase IDs:', phaseIds);
+    console.error('�?O [SCORES API] User ID:', userId);
+    console.error('�?O [SCORES API] Error status:', error.response?.status);
+    console.error('�?O [SCORES API] Error message:', error.message);
+    console.error('�?O [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
-
-// Get phase summary with LLM-generated feedback
+// Get phase summary// Get phase summary with LLM-generated feedback
 export const getPhaseSummary = async (phaseId: string) => {
   console.log('🤖 [SCORES API] Requesting phase summary with LLM analysis');
   console.log('🤖 [SCORES API] Phase ID:', phaseId);

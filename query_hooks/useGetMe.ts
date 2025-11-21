@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { getUserById } from "../services/apiClient";
 
 export const useGetUserById = (userId: number | string) => {
+  const normalizedId = String(userId);
   return useQuery({
-    queryKey: ['user', userId],
-    queryFn: () => getUserById(userId),
+    queryKey: ['user', normalizedId],
+    queryFn: () => getUserById(normalizedId),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000, 
   });

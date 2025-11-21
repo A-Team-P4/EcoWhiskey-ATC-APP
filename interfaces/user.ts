@@ -5,7 +5,7 @@ export interface RegistrationData {
   email: string;
   password: string;
   accountType: 'student' | 'instructor';
-  school?: string;
+  schoolId?: number | string;
 }
 
 export interface LoginCredentials {
@@ -18,6 +18,26 @@ export interface School {
   name: string;
   location: string;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface SchoolCreateRequest {
+  name: string;
+  location?: string;
+}
+
+export interface SchoolUpdateRequest {
+  name?: string;
+  location?: string | null;
+}
+
+export interface UserGroupSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  instructorId?: string;
+  role?: 'INSTRUCTOR' | 'ASSISTANT' | 'STUDENT';
+  memberCount?: number;
 }
 
 export interface User {
@@ -27,12 +47,14 @@ export interface User {
   email: string;
   accountType: 'student' | 'instructor';
   school?: School | null;
+  group?: UserGroupSummary | null;
   photo?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface AuthResponse {
+  accountType: string;
   accessToken: string;
   refreshToken?: string;
   user: User;

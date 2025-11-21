@@ -164,7 +164,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
       />
       
 
-      
+
 
       {serverError ? (
         <Typography variant="caption" style={styles.serverError}>
@@ -212,7 +212,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
           <View style={[styles.modalContainer, isWeb && styles.modalContainerWeb]}>
             <View style={styles.modalHeader}>
               <Typography variant="h2" style={styles.modalTitle}>
-                Recuperar contrasena
+                Recuperar contraseña
               </Typography>
               <TouchableOpacity
                 onPress={handleCloseResetModal}
@@ -245,7 +245,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
             />
             <Spacer size={16} />
             <ActionButton
-              title={isResetSubmitting ? 'Enviando...' : 'Enviar instrucciones'}
+              title={isResetSubmitting ? 'Enviando...' : 'Enviar'}
               onPress={handleResetPassword}
               loading={isResetSubmitting}
             />

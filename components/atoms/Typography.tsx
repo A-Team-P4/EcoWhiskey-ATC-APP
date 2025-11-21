@@ -10,10 +10,10 @@ interface TypographyProps {
   align?: 'left' | 'center' | 'right';
 }
 
-export const Typography: React.FC<TypographyProps> = ({ 
-  variant = 'body', 
-  children, 
-  style, 
+export const Typography: React.FC<TypographyProps> = ({
+  variant = 'body',
+  children,
+  style,
   color,
   align = 'left'
 }) => {
@@ -31,7 +31,7 @@ export const Typography: React.FC<TypographyProps> = ({
 
   return (
     <RNText style={[
-      getVariantStyle(),
+        getVariantStyle(),
       { color, textAlign: align },
       style
     ]}>

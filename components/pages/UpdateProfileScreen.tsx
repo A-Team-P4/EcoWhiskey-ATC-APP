@@ -7,6 +7,7 @@ import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
+import { useGroupsByUser, useRemoveGroupMember } from '@/query_hooks/useGroups';
 import {
   CURRENT_USER_QUERY_KEY,
   useChangeUserPassword,
@@ -38,19 +39,36 @@ function UpdateProfileScreen() {
     isFetching: isUserFetching,
     isError: isUserError,
     error: userError,
+    refetch: refetchCurrentUser,
   } = useCurrentUser();
   const { data: schoolsResponse = [], isLoading: isSchoolsLoading } = useSchools();
 
   const updateUserProfileMutation = useUpdateUserProfile();
   const updateUserSchoolMutation = useUpdateUserSchool();
   const changeUserPasswordMutation = useChangeUserPassword();
+  const removeGroupMemberMutation = useRemoveGroupMember();
+  const cachedUser = queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null;
+  const resolvedUser = currentUser ?? cachedUser ?? null;
+  const targetUserId = resolvedUser?.id;
+  const {
+    data: userGroups = [],
+    isLoading: isUserGroupsLoading,
+    isFetching: isUserGroupsFetching,
+  } = useGroupsByUser(targetUserId, { enabled: Boolean(targetUserId) });
+  const hasAssignedGroups = (userGroups?.length ?? 0) > 0;
+  const shouldLockSchoolSelection =
+    (resolvedUser?.accountType === 'instructor') || hasAssignedGroups;
+  const schoolLockReason =
+    resolvedUser?.accountType === 'instructor'
+      ? 'Los instructores no pueden cambiar su escuela.'
+      : hasAssignedGroups
+        ? 'No puedes cambiar de escuela mientras perteneces a un grupo.'
+        : undefined;
 
   const profileMutationPending =
     updateUserProfileMutation.isPending || updateUserSchoolMutation.isPending;
   const isProfileLoading = profileMutationPending || isUserLoading;
-
-  const resolvedUser =
-    currentUser ?? queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? null;
+  const isUserGroupsPending = isUserGroupsLoading || isUserGroupsFetching;
 
   const isPasswordLoading = changeUserPasswordMutation.isPending;
   const shouldShowLoading = (isUserLoading || isUserFetching) && !resolvedUser;
@@ -64,6 +82,16 @@ function UpdateProfileScreen() {
       Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
       return;
     }
+
+    const lockForInstructor = latestUser.accountType === 'instructor';
+    const lockForGroups = hasAssignedGroups;
+    const lockSchoolSelection = lockForInstructor || lockForGroups;
+    const lockReasonMessage =
+      lockForInstructor
+        ? 'Los instructores no pueden cambiar su escuela.'
+        : lockForGroups
+          ? 'No puedes cambiar de escuela mientras perteneces a un grupo.'
+          : undefined;
 
     const profileChanges: UpdateUserPayload = {};
 
@@ -86,6 +114,15 @@ function UpdateProfileScreen() {
       updatePromises.push(
         updateUserProfileMutation.mutateAsync({ userId, payload: profileChanges })
       );
+    }
+
+    if (
+      lockSchoolSelection &&
+      data.schoolId &&
+      data.schoolId !== (latestUser.school?.id ?? '')
+    ) {
+      Alert.alert('Cambio no permitido', lockReasonMessage ?? 'No puedes modificar la escuela.');
+      return;
     }
 
     if (data.schoolId && data.schoolId !== (latestUser.school?.id ?? '')) {
@@ -182,6 +219,37 @@ function UpdateProfileScreen() {
     );
   }
 
+  const canLeaveGroup =
+    Boolean(resolvedUser.group) &&
+    (resolvedUser.group?.instructorId
+      ? resolvedUser.group.instructorId !== resolvedUser.id
+      : resolvedUser.group?.role
+        ? resolvedUser.group.role !== 'INSTRUCTOR'
+        : resolvedUser.accountType !== 'instructor');
+
+  const handleLeaveGroup = async () => {
+    if (!resolvedUser.group?.id) return;
+
+    try {
+      await removeGroupMemberMutation.mutateAsync({
+        groupId: String(resolvedUser.group.id),
+        userId: resolvedUser.id,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY }),
+        refetchCurrentUser(),
+      ]);
+      Alert.alert('Grupo', 'Abandonaste el grupo correctamente.');
+    } catch (error: any) {
+      console.error('Failed to leave group', error);
+      const message =
+        error?.response?.data?.message ??
+        error?.message ??
+        'No se pudo abandonar el grupo. Intenta nuevamente.';
+      Alert.alert('Error', message);
+    }
+  };
+
   return (
     <ResponsiveLayout showTopNav={true}>
       <ScrollView
@@ -194,6 +262,13 @@ function UpdateProfileScreen() {
           onSubmit={handleProfileUpdate}
           isLoading={isProfileLoading}
           isSchoolLoading={isSchoolsLoading}
+          userGroups={userGroups}
+          isGroupsLoading={isUserGroupsPending}
+          lockSchoolSelection={shouldLockSchoolSelection}
+          lockSchoolReason={schoolLockReason}
+          canLeaveGroup={canLeaveGroup}
+          onLeaveGroup={canLeaveGroup ? handleLeaveGroup : undefined}
+          leaveGroupLoading={removeGroupMemberMutation.isPending}
         />
 
         <Spacer size={32} />

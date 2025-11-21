@@ -1,3 +1,5 @@
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { NavigationWarningProvider } from '@/contexts/NavigationWarningContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -10,8 +12,6 @@ import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from 'react-na
 import 'react-native-reanimated';
 import '../global.css';
 import { queryClient } from '../lib/queryClient';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { NavigationWarningProvider } from '@/contexts/NavigationWarningContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -42,6 +42,7 @@ export default function RootLayout() {
                 <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
                 <Stack.Screen name="phase-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="session-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="instructor-dashboard" options={{ headerShown: false }} />
                 <Stack.Screen name="user-profile" options={{ headerShown: false }} />
               </Stack>
             </ProtectedRoute>

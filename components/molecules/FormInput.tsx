@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { KeyboardTypeOptions, Text as RNText, TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 import { TextInput } from 'react-native-paper';
 
 import { Icon } from '../atoms/Icon';
@@ -11,14 +11,16 @@ interface FormInputProps {
   error?: string;
   required?: boolean;
   secureTextEntry?: boolean;
-  keyboardType?: any;
-  autoCapitalize?: any;
+  keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: RNTextInput['props']['autoCapitalize'];
   placeholder?: string;
   enableFocusControl?: boolean;
   leftIconName?: string;
   leftIconType?: React.ComponentProps<typeof Icon>['type'];
   leftIconColor?: string;
   onIconPress?: () => void;
+  leftIconA11yLabel?: string;
+  rightIconA11yLabel?: string;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -36,10 +38,12 @@ export const FormInput: React.FC<FormInputProps> = ({
   leftIconType = 'MaterialIcons',
   leftIconColor,
   onIconPress,
+  leftIconA11yLabel = 'abrir acción de campo',
+  rightIconA11yLabel = 'mostrar/ocultar contraseña',
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<RNTextInput | null>(null);
 
   const displayLabel = required ? `${label} *` : label;
   const isSecure = secureTextEntry && !showPassword;
@@ -55,9 +59,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   };
 
   const handleIconPress = () => {
-    if (onIconPress) {
-      onIconPress();
-    }
+    onIconPress?.();
     if (enableFocusControl) {
       inputRef.current?.focus();
     }
@@ -69,7 +71,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         theme={customTheme}
         label={displayLabel}
         value={value}
-        ref={inputRef}
+        ref={inputRef as any}
         onChangeText={onChangeText}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -78,7 +80,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         outlineStyle={[
           styles.inputOutline,
           isFocused && styles.inputOutlineFocused,
-          error && styles.inputOutlineError,
+          !!error && styles.inputOutlineError,
         ]}
         error={!!error}
         secureTextEntry={isSecure}
@@ -89,6 +91,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         left={
           shouldShowLeftIcon ? (
             <TextInput.Icon
+              // Renderizamos TU Icon seguro (nunca strings sueltos)
               icon={() => (
                 <Icon
                   name={leftIconName as string}
@@ -99,6 +102,7 @@ export const FormInput: React.FC<FormInputProps> = ({
               )}
               onPress={enableFocusControl || onIconPress ? handleIconPress : undefined}
               forceTextInputFocus={false}
+              accessibilityLabel={leftIconA11yLabel}
             />
           ) : undefined
         }
@@ -115,12 +119,13 @@ export const FormInput: React.FC<FormInputProps> = ({
               )}
               onPress={() => setShowPassword(!showPassword)}
               forceTextInputFocus={false}
+              accessibilityLabel={rightIconA11yLabel}
             />
           ) : undefined
         }
       />
       <View style={styles.helperTextContainer}>
-        {error && <Text style={styles.helperText}>{error}</Text>}
+        {!!error && <RNText style={styles.helperText}>{error}</RNText>}
       </View>
     </View>
   );
@@ -133,15 +138,12 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
   },
-  inputFocused: {
-    // backgroundColor: '#FFFFFF',
-  },
+  inputFocused: {},
   inputContent: {
     color: '#1C1C1E',
   },
   inputOutline: {
     borderRadius: 8,
-    // borderColor: '#E5E5EA',
   },
   inputOutlineFocused: {
     borderColor: '#2196F3',

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthResponse, LoginCredentials } from '../interfaces/user';
 import { loginUser } from '../services/apiClient';
 import { decodeJWT, JWTPayload } from '../utils/jwt';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export const useLogin = () => {
             queryClient.invalidateQueries({ queryKey: ['user', decoded.user.id] });
             console.log('✅ User ID extracted:', decoded.user.id);
           }
+          notifyAuthTokenChange(true);
         } catch (error) {
           console.warn('Failed to persist auth token or decode JWT', error);
         }

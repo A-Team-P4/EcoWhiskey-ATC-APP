@@ -42,11 +42,16 @@ export const usePhaseSummary = (phaseId?: string) =>
     enabled: Boolean(phaseId),
   });
 
-export const ALL_PHASES_SCORES_QUERY_KEY = (phaseIds?: string[]) =>
-  ['scores', 'phases', 'all', phaseIds?.join(',') || 'all'] as const;
+interface AllPhasesScoresOptions {
+  phaseIds?: string[];
+  userId?: string;
+}
 
-export const useAllPhasesScores = (phaseIds?: string[]) =>
+export const ALL_PHASES_SCORES_QUERY_KEY = (phaseIds?: string[], userId?: string) =>
+  ['scores', 'phases', 'all', phaseIds?.join(',') || 'all', userId ?? 'me'] as const;
+
+export const useAllPhasesScores = (options?: AllPhasesScoresOptions) =>
   useQuery<AllPhasesScoresResponse>({
-    queryKey: ALL_PHASES_SCORES_QUERY_KEY(phaseIds),
-    queryFn: () => getAllPhasesScores(phaseIds),
+    queryKey: ALL_PHASES_SCORES_QUERY_KEY(options?.phaseIds, options?.userId),
+    queryFn: () => getAllPhasesScores(options?.phaseIds, options?.userId),
   });
