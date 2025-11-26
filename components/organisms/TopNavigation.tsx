@@ -34,7 +34,7 @@ export const TopNavigation: React.FC = () => {
   const isScoresActive = pathname.includes('ScoresTab');
   const isUserProfileTab = pathname.includes('UserProfileTab');
   const isInstructor = user?.accountType === 'instructor';
-  const isInstructorDashboardActive = pathname.includes('instructor-dashboard');
+  const isInstructorDashboardActive = pathname.includes('InstructorDashboardTab');
 
   const getInitials = () => {
     if (!user?.firstName || !user?.lastName) return '?';
@@ -96,7 +96,7 @@ export const TopNavigation: React.FC = () => {
   const handleInstructorDashboardPress = () => {
     setShowAccountMenu(false);
     requestNavigation(() => {
-      router.push('/instructor-dashboard');
+      router.push('/(tabs)/InstructorDashboardTab');
     });
   };
 

@@ -44,7 +44,7 @@ const LoginScreen: React.FC = () => {
 
           const nextRoute =
             currentUser.accountType === 'instructor'
-              ? '/instructor-dashboard'
+              ? '/(tabs)/InstructorDashboardTab'
               : '/(tabs)/ATCTrainingTab';
           router.replace(nextRoute);
           setIsCheckingStoredSession(false);
@@ -85,7 +85,7 @@ const LoginScreen: React.FC = () => {
           resolve();
           const nextRoute =
             data.accountType === "instructor"
-              ? '/instructor-dashboard'
+              ? '/(tabs)/InstructorDashboardTab'
               : '/(tabs)/ATCTrainingTab';
           router.replace(nextRoute);
         },

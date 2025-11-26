@@ -2,12 +2,14 @@ import { LoginCredentials } from '@/interfaces/user';
 import { requestPasswordReset } from '@/services/apiClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Image, Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
+import { AppSnackbar } from '../molecules/AppSnackbar';
 import { FormInput } from '../molecules/FormInput';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 interface FormErrors {
   email?: string;
@@ -24,6 +26,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isWeb = width >= 768;
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -94,7 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
     setIsResetSubmitting(true);
     try {
       const response = await requestPasswordReset(trimmedEmail);
-      Alert.alert('Recuperacion de contraseña', response.message);
+      showSnackbar(response.message, 'success');
       setResetEmail('');
       setIsResetModalVisible(false);
     } catch (catchError) {
@@ -264,7 +267,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading = fals
         </View>
       </Modal>
 
-      
+      {/* Snackbar */}
+      <AppSnackbar
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={hideSnackbar}
+      />
     </View>
   );
 };

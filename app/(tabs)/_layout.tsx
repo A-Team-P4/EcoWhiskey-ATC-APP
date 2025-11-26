@@ -4,10 +4,13 @@ import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 
 import { Icon } from "@/components/atoms/Icon";
 import { HapticTab } from "@/components/haptic-tab";
+import { useCurrentUser } from "@/query_hooks/useUserProfile";
 
 export default function TabLayout() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+  const { data: currentUser } = useCurrentUser();
+  const isInstructor = currentUser?.accountType === 'instructor';
 
   return (
     <Tabs
@@ -74,6 +77,32 @@ export default function TabLayout() {
               />
             </View>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="InstructorDashboardTab"
+        options={{
+          href: isInstructor ? undefined : null, // Only show for instructors
+          title: "Instructor Dashboard",
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <View style={styles.tabContainer}>
+              {focused && <View style={styles.activeIndicator} />}
+              <Icon
+                type="MaterialIcons"
+                name="dashboard"
+                size={23}
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="user-profile"
+        options={{
+          href: null, // Hide from tab bar
+          title: "User Profile",
         }}
       />
 

@@ -1,3 +1,4 @@
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { GroupMembershipResponse, GroupResponse } from '@/interfaces/group';
 import {
   useAddGroupMember,
@@ -14,19 +15,20 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  FlatList,
   Modal,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
+import { AppSnackbar } from '../molecules/AppSnackbar';
 import { FormInput } from '../molecules/FormInput';
 import { MultiSelectDropdown } from '../molecules/MultiSelectDropdown';
 import ResponsiveLayout from '../templates/ResponsiveLayout';
@@ -40,6 +42,7 @@ export const InstructorDashboardScreen = () => {
   const { width } = useWindowDimensions();
   const isCompact = width < 640;
   const router = useRouter();
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const {
     data: currentUser,
@@ -52,8 +55,6 @@ export const InstructorDashboardScreen = () => {
 
   const {
     data: students = [],
-    isLoading: isStudentsLoading,
-    isFetching: isStudentsFetching,
     refetch: refetchStudents,
   } = useStudentsBySchool(schoolId);
 
@@ -176,7 +177,13 @@ export const InstructorDashboardScreen = () => {
     if (groups.length > 0) {
       fetchCounts();
     } else {
-      setGroupMemberCounts({});
+      setGroupMemberCounts((prev) => {
+        // Only update if there are actually items to clear
+        if (Object.keys(prev).length > 0) {
+          return {};
+        }
+        return prev;
+      });
     }
 
     return () => {
@@ -186,12 +193,19 @@ export const InstructorDashboardScreen = () => {
 
   useEffect(() => {
     if (membersModalGroup) {
-      setGroupMemberCounts((prev) => ({
-        ...prev,
-        [membersModalGroup.id]: studentMembers.length,
-      }));
+      setGroupMemberCounts((prev) => {
+        const currentCount = prev[membersModalGroup.id];
+        const newCount = studentMembers.length;
+        if (currentCount !== newCount) {
+          return {
+            ...prev,
+            [membersModalGroup.id]: newCount,
+          };
+        }
+        return prev;
+      });
     }
-  }, [studentMembers, membersModalGroup]);
+  }, [studentMembers.length, membersModalGroup?.id]);
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
@@ -201,7 +215,7 @@ export const InstructorDashboardScreen = () => {
     ]);
   }, [refetchCurrentUser, refetchStudents, refetchGroups, schoolId]);
 
-  const navigateToStudentScores = (student: typeof students[number]) => {
+  const navigateToStudentScores = (student: { id: string; firstName: string; lastName: string; email: string }) => {
     router.push({
       pathname: '/(tabs)/ScoresTab',
       params: {
@@ -210,34 +224,6 @@ export const InstructorDashboardScreen = () => {
       },
     });
   };
-
-  const renderStudent = ({ item }: { item: typeof students[number] }) => (
-    <View style={styles.studentCard}>
-      <View>
-        <Typography variant="h3" style={styles.studentName}>
-          {item.firstName} {item.lastName}
-        </Typography>
-        <Typography variant="body" style={styles.studentEmail}>
-          {item.email}
-        </Typography>
-      </View>
-      <View style={styles.studentButtonWrapper}>
-        <ActionButton
-          title="Ver evaluaciones"
-          variant="secondary"
-          onPress={() => navigateToStudentScores(item)}
-        />
-      </View>
-    </View>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Typography variant="body" style={styles.emptyStateText}>
-        No hay estudiantes asociados a tu escuela todavía.
-      </Typography>
-    </View>
-  );
 
   const renderLayout = (content: React.ReactNode) => (
     <ResponsiveLayout showTopNav topNavProps={{ showNavigationOptions: false }}>
@@ -297,7 +283,7 @@ export const InstructorDashboardScreen = () => {
       closeGroupModal();
     } catch (error) {
       console.error('Failed to save group', error);
-      Alert.alert('Error', 'No se pudo guardar el grupo. Intenta nuevamente.');
+      showSnackbar('No se pudo guardar el grupo. Intenta nuevamente.', 'error');
     }
   };
 
@@ -320,7 +306,7 @@ export const InstructorDashboardScreen = () => {
       closeDeleteGroupModal();
     } catch (error) {
       console.error('Failed to delete group', error);
-      Alert.alert('Error', 'No se pudo eliminar el grupo.');
+      showSnackbar('No se pudo eliminar el grupo.', 'error');
     }
   };
 
@@ -358,7 +344,7 @@ export const InstructorDashboardScreen = () => {
       await refetchGroups();
     } catch (error) {
       console.error('Failed to add students', error);
-      Alert.alert('Error', 'No se pudieron agregar los estudiantes.');
+      showSnackbar('No se pudieron agregar los estudiantes.', 'error');
     }
   };
 
@@ -366,7 +352,7 @@ export const InstructorDashboardScreen = () => {
     if (!membersModalGroup) return;
     const instructorId = membersModalGroup.instructorId?.toString();
     if (instructorId === membership.userId?.toString()) {
-      Alert.alert('Acción no permitida', 'No puedes eliminar al instructor del grupo.');
+      showSnackbar('No puedes eliminar al instructor del grupo.', 'error');
       return;
     }
 
@@ -395,7 +381,7 @@ export const InstructorDashboardScreen = () => {
       await refetchGroups();
     } catch (error) {
       console.error('Failed to remove member', error);
-      Alert.alert('Error', 'No se pudo remover al estudiante.');
+      showSnackbar('No se pudo remover al estudiante.', 'error');
     }
   };
 
@@ -432,14 +418,6 @@ export const InstructorDashboardScreen = () => {
         <Typography variant="body">
           Aún no tienes una escuela asociada. Actualiza tu perfil o contacta al administrador.
         </Typography>
-      </View>
-    );
-  }
-
-  if (isStudentsLoading && !students.length) {
-    return renderLayout(
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2196F3" />
       </View>
     );
   }
@@ -488,9 +466,38 @@ export const InstructorDashboardScreen = () => {
         <View style={styles.groupList}>
           {groups.map((group) => (
             <View key={group.id} style={styles.groupCard}>
-              <Typography variant="h3" style={styles.groupName}>
-                {group.name}
-              </Typography>
+              <View style={styles.groupHeader}>
+                <Typography variant="h3" style={styles.groupName}>
+                  {group.name}
+                </Typography>
+                <View style={styles.groupHeaderActions}>
+                  <TouchableOpacity
+                    onPress={() => openEditGroupModal(group)}
+                    activeOpacity={0.7}
+                    style={styles.iconButton}
+                  >
+                    <Icon
+                      type="FontAwesome5"
+                      name="edit"
+                      size={18}
+                      color="#6B7280"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteGroup(group)}
+                    disabled={deleteGroupMutation.isPending}
+                    activeOpacity={0.7}
+                    style={styles.iconButton}
+                  >
+                    <Icon
+                      type="MaterialIcons"
+                      name="delete-outline"
+                      size={22}
+                      color="#EF4444"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
               {group.description ? (
                 <>
                   <Spacer size={4} />
@@ -504,41 +511,31 @@ export const InstructorDashboardScreen = () => {
                 <Typography variant="caption" style={styles.groupMeta}>
                   {group.memberCount ?? groupMemberCounts[group.id] ?? 0} integrante(s)
                 </Typography>
-                <Typography
-                  variant="caption"
+                <View
                   style={[
                     styles.inviteBadge,
                     group.inviteOnly ? styles.inviteBadgePrivate : styles.inviteBadgeOpen,
                   ]}
                 >
-                  {group.inviteOnly ? 'Solo invitación' : 'Abierto'}
-                </Typography>
+                  <Typography variant="caption" style={styles.inviteBadgeText}>
+                    {group.inviteOnly ? 'Solo invitación' : 'Abierto'}
+                  </Typography>
+                </View>
               </View>
               <Spacer size={12} />
-              <View style={styles.groupActions}>
+              <View style={styles.groupActionRow}>
                 <TouchableOpacity
-                  style={styles.groupActionButton}
-                  onPress={() => openMembersModal(group)}
+                  style={styles.groupActionBtn}
+                  onPress={() => router.push({
+                    pathname: '/group-members',
+                    params: {
+                      groupId: String(group.id),
+                      groupName: group.name,
+                    },
+                  })}
                 >
                   <Typography variant="body" style={styles.groupActionLabel}>
                     Estudiantes
-                  </Typography>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.groupActionButton}
-                  onPress={() => openEditGroupModal(group)}
-                >
-                  <Typography variant="body" style={styles.groupActionLabel}>
-                    Editar
-                  </Typography>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.groupActionButton, styles.deleteActionButton]}
-                  onPress={() => handleDeleteGroup(group)}
-                  disabled={deleteGroupMutation.isPending}
-                >
-                  <Typography variant="body" style={styles.deleteActionLabel}>
-                    Eliminar
                   </Typography>
                 </TouchableOpacity>
               </View>
@@ -686,18 +683,37 @@ export const InstructorDashboardScreen = () => {
                             {member.user?.email ?? member.email ?? 'Sin correo definido'}
                           </Typography>
                         </View>
-                        <TouchableOpacity
-                          style={[
-                            styles.memberActionButton,
-                            !canRemove && styles.memberActionButtonDisabled,
-                          ]}
-                          disabled={!canRemove || removeGroupMemberMutation.isPending}
-                          onPress={() => handleRemoveMemberRequest(member)}
-                        >
-                          <Typography variant="body" style={styles.memberActionLabel}>
-                            Remover
-                          </Typography>
-                        </TouchableOpacity>
+                        <View style={styles.memberActions}>
+                          <TouchableOpacity
+                            style={styles.memberEvaluationButton}
+                            onPress={() => {
+                              if (memberUserId) {
+                                navigateToStudentScores({
+                                  id: memberUserId,
+                                  firstName: memberFirstName ?? '',
+                                  lastName: memberLastName ?? '',
+                                  email: member.user?.email ?? member.email ?? '',
+                                });
+                              }
+                            }}
+                          >
+                            <Typography variant="body" style={styles.memberEvaluationLabel}>
+                              Ver evaluaciones
+                            </Typography>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.memberActionButton,
+                              !canRemove && styles.memberActionButtonDisabled,
+                            ]}
+                            disabled={!canRemove || removeGroupMemberMutation.isPending}
+                            onPress={() => handleRemoveMemberRequest(member)}
+                          >
+                            <Typography variant="body" style={styles.memberActionLabel}>
+                              Remover
+                            </Typography>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     );
                   })}
@@ -713,43 +729,22 @@ export const InstructorDashboardScreen = () => {
     </Modal>
   );
 
-  const listHeader = (
-    <View>
-      <Typography variant="h2">Panel de Instructor</Typography>
-      <Spacer size={4} />
-      <Typography variant="body" style={styles.subtitle}>
-        {currentUser?.school?.name ?? 'Escuela no definida'}
-      </Typography>
-      <Spacer size={16} />
-      <Typography variant="h3" style={styles.sectionTitle}>
-        Estudiantes de tu escuela
-      </Typography>
-      <Spacer size={8} />
-    </View>
-  );
-
   return renderLayout(
     <View style={styles.content}>
-      <FlatList
-        data={students}
-        keyExtractor={(item) => item.id}
-        renderItem={renderStudent}
-        ItemSeparatorComponent={() => <Spacer size={12} />}
-        ListEmptyComponent={renderEmptyState}
-        ListHeaderComponent={listHeader}
-        ListFooterComponent={
-          <>
-            <Spacer size={24} />
-            {renderGroupsSection()}
-          </>
-        }
+      <ScrollView
         refreshControl={
-          <RefreshControl refreshing={isStudentsFetching} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={isGroupsLoading} onRefresh={handleRefresh} />
         }
-        contentContainerStyle={
-          students.length === 0 ? styles.emptyListContent : styles.listContent
-        }
-      />
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Typography variant="h2">Panel de Instructor</Typography>
+        <Spacer size={4} />
+        <Typography variant="body" style={styles.subtitle}>
+          {currentUser?.school?.name ?? 'Escuela no definida'}
+        </Typography>
+        <Spacer size={24} />
+        {renderGroupsSection()}
+      </ScrollView>
 
       {renderGroupModal()}
       {renderMembersModal()}
@@ -833,6 +828,14 @@ export const InstructorDashboardScreen = () => {
           </TouchableWithoutFeedback>
         </Modal>
       ) : null}
+
+      {/* Snackbar */}
+      <AppSnackbar
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={hideSnackbar}
+      />
     </View>
   );
 };
@@ -846,6 +849,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 24,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   subtitle: {
     color: '#4B5563',
@@ -869,8 +875,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#1E40AF',
-    backgroundColor: '#1D4ED8',
+    borderColor: '#2196F3',
+    backgroundColor: '#2196F3',
   },
   sectionActionButtonFull: {
     width: '100%',
@@ -879,36 +885,6 @@ const styles = StyleSheet.create({
   sectionActionLabel: {
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: 40,
-  },
-  emptyListContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  studentCard: {
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  studentName: {
-    fontWeight: '600',
-  },
-  studentEmail: {
-    color: '#1F2937',
-  },
-  studentMeta: {
-    color: '#6B7280',
-  },
-  studentButtonWrapper: {
-    minWidth: 160,
   },
   emptyState: {
     alignItems: 'center',
@@ -944,8 +920,22 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#FFFFFF',
   },
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   groupName: {
     fontWeight: '600',
+    flex: 1,
+  },
+  groupHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    padding: 4,
   },
   groupDescription: {
     color: '#374151',
@@ -962,31 +952,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    alignItems: 'center',
   },
-  groupActionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#CBD5F5',
-    backgroundColor: '#E0E7FF',
+  groupActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  groupActionBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    backgroundColor: 'transparent',
   },
   groupActionLabel: {
-    color: '#1E3A8A',
+    color: '#2196F3',
     fontWeight: '600',
-  },
-  deleteActionButton: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FECACA',
-  },
-  deleteActionLabel: {
-    color: '#B91C1C',
-    fontWeight: '600',
+    fontSize: 12,
   },
   inviteBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
+  },
+  inviteBadgeText: {
     fontWeight: '600',
     color: '#0F172A',
   },
@@ -1043,19 +1034,37 @@ const styles = StyleSheet.create({
   memberMeta: {
     color: '#6B7280',
   },
+  memberActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  memberEvaluationButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  memberEvaluationLabel: {
+    color: '#2196F3',
+    fontWeight: '600',
+    fontSize: 14,
+  },
   memberActionButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F87171',
-    backgroundColor: '#FCA5A5',
+    borderColor: '#FFCDD2',
+    backgroundColor: '#FFEBEE',
   },
   memberActionButtonDisabled: {
     opacity: 0.5,
   },
   memberActionLabel: {
-    color: '#7F1D1D',
+    color: '#EF4444',
     fontWeight: '600',
+    fontSize: 14,
   },
 });

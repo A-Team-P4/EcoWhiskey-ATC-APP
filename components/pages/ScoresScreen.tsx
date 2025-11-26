@@ -242,6 +242,29 @@ export default function ScoresScreen() {
 
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
+  // Use a ref to track if we just navigated with params
+  const justNavigatedRef = React.useRef(false);
+
+  // When params change (new navigation), mark as "just navigated"
+  React.useEffect(() => {
+    if (selectedUserId) {
+      justNavigatedRef.current = true;
+    }
+  }, [selectedUserId]);
+
+  // On focus, if we didn't just navigate, clear the params
+  useFocusEffect(
+    useCallback(() => {
+      if (justNavigatedRef.current) {
+        // We just navigated here with params, don't clear
+        justNavigatedRef.current = false;
+      } else if (viewingOtherUser) {
+        // Returning to tab with stale student data - clear it
+        router.setParams({ userId: undefined, userName: undefined });
+      }
+    }, [viewingOtherUser, router])
+  );
+
   const {
     data: history = [],
     isLoading: isHistoryLoading,
@@ -355,9 +378,7 @@ export default function ScoresScreen() {
 
   const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
   const canManageSessions = !viewingOtherUser;
-  const clearSelectedUser = useCallback(() => {
-    router.replace('/(tabs)/ScoresTab');
-  }, [router]);
+  const clearSelectedUser = useCallback(() => { router.replace('/(tabs)/ScoresTab');  }, [router]);
 
   return (
     <ResponsiveLayout showTopNav={true}>
@@ -483,7 +504,7 @@ export default function ScoresScreen() {
           <>
             {history.length === 0 ? (
               <View style={styles.centerContent}>
-                <Icon type="MaterialIcons" name="assignment-outlined" size={64} color="#9CA3AF" />
+                <Icon type="MaterialIcons" name="assignment" size={64} color="#9CA3AF" />
                 <Spacer size={16} />
                 <Typography variant="h3" style={styles.emptyTitle}>
                   {viewingOtherUser
