@@ -7,7 +7,7 @@ export const decodeJWT = <T = any>(token: string): T | null => {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
-      console.error('Invalid JWT format');
+      console.log('Invalid JWT format');
       return null;
     }
 
@@ -23,7 +23,7 @@ export const decodeJWT = <T = any>(token: string): T | null => {
 
     return JSON.parse(jsonPayload) as T;
   } catch (error) {
-    console.error('Failed to decode JWT:', error);
+    console.log('Failed to decode JWT:', error);
     return null;
   }
 };

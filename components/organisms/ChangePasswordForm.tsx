@@ -80,7 +80,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
       });
       setErrors({});
     } catch (error) {
-      console.error('Failed to change password', error);
+    
     }
   };
 

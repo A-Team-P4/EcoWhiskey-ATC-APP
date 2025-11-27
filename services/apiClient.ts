@@ -8,10 +8,10 @@ import {
   GroupUpdateRequest,
 } from '@/interfaces/group';
 import { TrainingConfiguration, TrainingSession } from '@/interfaces/training';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import {
   AuthResponse,
   ChangePasswordPayload,
@@ -87,9 +87,9 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     if (__DEV__) {
-      console.error(` ERROR API:`, error.response?.data || error.message);
+      console.log(` ERROR API:`, error.response?.data || error.message);
       if (error.message === 'Network Error') {
-        console.error(`dY"O Network Error - Check if backend is running at ${API_BASE_URL}`);
+        console.log(`dY"O Network Error - Check if backend is running at ${API_BASE_URL}`);
       }
     }
 
@@ -324,10 +324,10 @@ export const sendAudioForAnalysis = async (audioUri: string, sessionId: string, 
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [AUDIO API] Error analyzing audio');
-    console.error('❌ [AUDIO API] Error status:', error.response?.status);
-    console.error('❌ [AUDIO API] Error message:', error.message);
-    console.error('❌ [AUDIO API] Error response:', error.response?.data);
+    console.log('❌ [AUDIO API] Error analyzing audio');
+    console.log('❌ [AUDIO API] Error status:', error.response?.status);
+    console.log('❌ [AUDIO API] Error message:', error.message);
+    console.log('❌ [AUDIO API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -370,10 +370,10 @@ export const getTrainingContextHistory = async (userId: string): Promise<Trainin
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [HISTORY API] Error fetching training context history');
-    console.error('❌ [HISTORY API] Error status:', error.response?.status);
-    console.error('❌ [HISTORY API] Error message:', error.message);
-    console.error('❌ [HISTORY API] Error response:', JSON.stringify(error.response?.data, null, 2));
+    console.log('❌ [HISTORY API] Error fetching training context history');
+    console.log('❌ [HISTORY API] Error status:', error.response?.status);
+    console.log('❌ [HISTORY API] Error message:', error.message);
+    console.log('❌ [HISTORY API] Error response:', JSON.stringify(error.response?.data, null, 2));
     throw error;
   }
 };
@@ -402,11 +402,11 @@ export const getLastControllerTurn = async (sessionId: string): Promise<LastCont
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [TRAINING API] Error fetching last controller turn');
-    console.error('❌ [TRAINING API] Session ID:', sessionId);
-    console.error('❌ [TRAINING API] Error status:', error.response?.status);
-    console.error('❌ [TRAINING API] Error message:', error.message);
-    console.error('❌ [TRAINING API] Error response:', error.response?.data);
+    console.log('❌ [TRAINING API] Error fetching last controller turn');
+    console.log('❌ [TRAINING API] Session ID:', sessionId);
+    console.log('❌ [TRAINING API] Error status:', error.response?.status);
+    console.log('❌ [TRAINING API] Error message:', error.message);
+    console.log('❌ [TRAINING API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -428,11 +428,11 @@ export const deleteTrainingSession = async (sessionId: string): Promise<SuccessR
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [TRAINING API] Error deleting training session');
-    console.error('❌ [TRAINING API] Session ID:', sessionId);
-    console.error('❌ [TRAINING API] Error status:', error.response?.status);
-    console.error('❌ [TRAINING API] Error message:', error.message);
-    console.error('❌ [TRAINING API] Error response:', error.response?.data);
+    console.log('❌ [TRAINING API] Error deleting training session');
+    console.log('❌ [TRAINING API] Session ID:', sessionId);
+    console.log('❌ [TRAINING API] Error status:', error.response?.status);
+    console.log('❌ [TRAINING API] Error message:', error.message);
+    console.log('❌ [TRAINING API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -453,11 +453,11 @@ export const getSessionScores = async (sessionId: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching session scores');
-    console.error('❌ [SCORES API] Session ID:', sessionId);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.log('❌ [SCORES API] Error fetching session scores');
+    console.log('❌ [SCORES API] Session ID:', sessionId);
+    console.log('❌ [SCORES API] Error status:', error.response?.status);
+    console.log('❌ [SCORES API] Error message:', error.message);
+    console.log('❌ [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -481,11 +481,11 @@ export const getPhaseScores = async (phaseId: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching phase scores');
-    console.error('❌ [SCORES API] Phase ID:', phaseId);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.log('❌ [SCORES API] Error fetching phase scores');
+    console.log('❌ [SCORES API] Phase ID:', phaseId);
+    console.log('❌ [SCORES API] Error status:', error.response?.status);
+    console.log('❌ [SCORES API] Error message:', error.message);
+    console.log('❌ [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -520,12 +520,12 @@ export const getAllPhasesScores = async (phaseIds?: string[], userId?: string) =
 
     return response.data;
   } catch (error: any) {
-    console.error('�?O [SCORES API] Error fetching all phases scores');
-    console.error('�?O [SCORES API] Phase IDs:', phaseIds);
-    console.error('�?O [SCORES API] User ID:', userId);
-    console.error('�?O [SCORES API] Error status:', error.response?.status);
-    console.error('�?O [SCORES API] Error message:', error.message);
-    console.error('�?O [SCORES API] Error response:', error.response?.data);
+    console.log('�?O [SCORES API] Error fetching all phases scores');
+    console.log('�?O [SCORES API] Phase IDs:', phaseIds);
+    console.log('�?O [SCORES API] User ID:', userId);
+    console.log('�?O [SCORES API] Error status:', error.response?.status);
+    console.log('�?O [SCORES API] Error message:', error.message);
+    console.log('�?O [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -549,11 +549,11 @@ export const getPhaseSummary = async (phaseId: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching phase summary');
-    console.error('❌ [SCORES API] Phase ID:', phaseId);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.log('❌ [SCORES API] Error fetching phase summary');
+    console.log('❌ [SCORES API] Phase ID:', phaseId);
+    console.log('❌ [SCORES API] Error status:', error.response?.status);
+    console.log('❌ [SCORES API] Error message:', error.message);
+    console.log('❌ [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };
@@ -579,11 +579,11 @@ export const getSessionSummary = async (sessionId: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('❌ [SCORES API] Error fetching session summary');
-    console.error('❌ [SCORES API] Session ID:', sessionId);
-    console.error('❌ [SCORES API] Error status:', error.response?.status);
-    console.error('❌ [SCORES API] Error message:', error.message);
-    console.error('❌ [SCORES API] Error response:', error.response?.data);
+    console.log('❌ [SCORES API] Error fetching session summary');
+    console.log('❌ [SCORES API] Session ID:', sessionId);
+    console.log('❌ [SCORES API] Error status:', error.response?.status);
+    console.log('❌ [SCORES API] Error message:', error.message);
+    console.log('❌ [SCORES API] Error response:', error.response?.data);
     throw error;
   }
 };

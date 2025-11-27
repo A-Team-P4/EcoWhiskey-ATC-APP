@@ -47,11 +47,9 @@ export const useGetMe = () => {
   return useQuery({
     queryKey: ['user', userId],
     queryFn: async () => {
-      console.log('🔍 useGetMe: Fetching user data for userId:', userId);
+
       const userData = await getUserById(userId!);
-      console.log('✅ useGetMe: User data received:', userData);
-      console.log('📸 useGetMe: Photo field:', userData.photo);
-      console.log('📸 useGetMe: Photo type:', typeof userData.photo);
+
       return userData;
     },
     enabled: !!userId && hasToken, // Only fetch if userId exists AND we have a valid token
