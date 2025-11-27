@@ -143,7 +143,7 @@ function UpdateProfileScreen() {
       await Promise.all(updatePromises);
       Alert.alert('Perfil actualizado', 'Perfil actualizado exitosamente.');
     } catch (error) {
-      console.error('Error updating profile:', error);
+    
       Alert.alert('Error', 'Error al actualizar el perfil.');
     }
   };
@@ -171,7 +171,7 @@ function UpdateProfileScreen() {
         response?.message ?? 'Contrasena actualizada correctamente.';
       Alert.alert('Contrasena actualizada', successMessage);
     } catch (error) {
-      console.error('Error changing password:', error);
+    
       Alert.alert('Error', 'No se pudo cambiar la contrasena. Intenta nuevamente.');
       throw (error instanceof Error ? error : new Error('CHANGE_PASSWORD_FAILED'));
     }
@@ -241,7 +241,7 @@ function UpdateProfileScreen() {
       ]);
       Alert.alert('Grupo', 'Abandonaste el grupo correctamente.');
     } catch (error: any) {
-      console.error('Failed to leave group', error);
+      console.log('Failed to leave group', error);
       const message =
         error?.response?.data?.message ??
         error?.message ??

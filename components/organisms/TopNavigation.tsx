@@ -13,7 +13,6 @@ import { Avatar } from 'react-native-paper';
 
 import { Icon } from '@/components/atoms/Icon';
 import { ThemedText } from '@/components/themed-text';
-import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
 import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,7 +23,6 @@ export const TopNavigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
-  const { requestNavigation } = useNavigationWarning();
   const queryClient = useQueryClient();
 
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -69,35 +67,27 @@ export const TopNavigation: React.FC = () => {
       closeMenus();
       router.replace('/login');
     } catch (error) {
-      console.error('Error logging out:', error);
+      
     }
   };
 
   const handleATCPress = () => {
-    requestNavigation(() => {
-      router.push('/(tabs)/ATCTrainingTab');
-    });
+    router.push('/(tabs)/ATCTrainingTab');
   };
 
   const handleProfilePress = () => {
     setShowAccountMenu(false);
-    requestNavigation(() => {
-      router.push('/user-profile');
-    });
+    router.push('/user-profile');
   };
 
   const handleScoresPress = () => {
     setShowAccountMenu(false);
-    requestNavigation(() => {
-      router.push('/(tabs)/ScoresTab');
-    });
+    router.push('/(tabs)/ScoresTab');
   };
 
   const handleInstructorDashboardPress = () => {
     setShowAccountMenu(false);
-    requestNavigation(() => {
-      router.push('/instructor-dashboard');
-    });
+    router.push('/instructor-dashboard');
   };
 
  

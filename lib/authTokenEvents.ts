@@ -14,7 +14,7 @@ export const notifyAuthTokenChange = (hasToken: boolean) => {
     try {
       listener(hasToken);
     } catch (error) {
-      console.warn('Auth token listener failed', error);
+
     }
   });
 };

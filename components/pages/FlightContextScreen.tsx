@@ -51,11 +51,19 @@ export default function FlightContextScreen() {
       const mappedCondition = mapFlightCategory(metarData.fltCat);
       const mappedVis = mapMETARVisibility(metarData.visib);
       const mappedQnh = Math.round(metarData.altim).toString();
+
+      // Handle variable wind direction (VRB) or other non-numeric cases
+      const windDir = typeof metarData.wdir === 'number'
+        ? metarData.wdir.toString().padStart(3, '0')
+        : metarData.wdir === 'VRB'
+          ? '000'  // Use calm wind (000) for variable winds
+          : '000'; // Default fallback for any other cases
+
       const newMeteo = {
         condition: mappedCondition,
         vis: mappedVis,
         qnh: mappedQnh,
-        windDirection: metarData.wdir.toString().padStart(3, '0'),
+        windDirection: windDir,
         windSpeed: metarData.wspd.toString(),
         temp: metarData.temp.toString(),
         dewp: metarData.dewp.toString(),
@@ -67,7 +75,7 @@ export default function FlightContextScreen() {
 
       setUseCurrentConditions(true);
     } catch (error: any) {
-      showSnackbar( error?.message || `No se pudieron cargar las condiciones METAR, seleccionalas manualmente`, 'error'  );
+      showSnackbar('METAR no disponible, por favor ingrese las condiciones manualmente', 'error');
     } finally {
       setIsFetchingMETAR(false);
     }
@@ -129,16 +137,11 @@ export default function FlightContextScreen() {
       session_completed: false
     };
 
-    console.log('📤 Sending training config:', trainingConfig);
 
     // Send to backend
     createContext(trainingConfig, {
       onSuccess: (data) => {
-        console.log('✅ Training context created successfully:', data);
-        console.log('📝 Session ID:', data.trainingSessionId);
-
         showSnackbar('Configuración de entrenamiento guardada', 'success');
-
         // Navigate after a brief delay to show the success message
         setTimeout(() => {
           router.push({
@@ -148,7 +151,6 @@ export default function FlightContextScreen() {
         }, 1000);
       },
       onError: (error: any) => {
-        console.error('❌ Error creating training context:', error);
         showSnackbar(
           error?.response?.data?.message || 'No se pudo guardar la configuración',
           'error'
@@ -220,39 +222,6 @@ export default function FlightContextScreen() {
               )}
             </View>
 
-            {/* Route - Only show if NOT mrpv_full_flight or mrpv_zone_echo or zone_echo_mrpv */}
-            {/* {scenario !== 'mrpv_full_flight' && scenario !== 'mrpv_zone_echo' && scenario !== 'zone_echo_mrpv' && (
-              <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>Ruta de Vuelo</ThemedText>
-                <View style={{ flexDirection: isWeb ? 'row' : 'column', gap: isWeb ? 12 : 0 }}>
-                  <View style={{ flex: 1 }}>
-                    <Dropdown
-                      label="Salida"
-                      placeholder="Aeropuerto de salida"
-                      options={AIRPORTS}
-                      value={departure}
-                      onSelect={setDeparture}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Dropdown
-                      label="Llegada"
-                      placeholder="Aeropuerto de llegada"
-                      options={AIRPORTS}
-                      value={arrival}
-                      onSelect={setArrival}
-                    />
-                  </View>
-                </View>
-                {departure && arrival && (
-                  <View style={styles.infoBox}>
-                    <ThemedText style={styles.infoText}>
-                      {departure} → {arrival}
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
-            )} */}
 
             {/* Fixed route display for mrpv_full_flight */}
             {scenario === 'mrpv_full_flight' && (

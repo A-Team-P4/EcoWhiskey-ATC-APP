@@ -1,21 +1,8 @@
+import { subscribeToAuthTokenChanges } from '@/lib/authTokenEvents';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { subscribeToAuthTokenChanges } from '@/lib/authTokenEvents';
 
-import {
-  changeUserPassword,
-  createSchool,
-  deleteSchool,
-  getCurrentUser,
-  getSchoolById,
-  getStudentsBySchool,
-  getSchools,
-  getUserById,
-  updateSchool,
-  updateUserProfile,
-  updateUserSchool,
-} from '../services/apiClient';
 import {
   ChangePasswordPayload,
   SchoolCreateRequest,
@@ -27,6 +14,19 @@ import {
   UpdateUserSchoolPayload,
   User,
 } from '../interfaces/user';
+import {
+  changeUserPassword,
+  createSchool,
+  deleteSchool,
+  getCurrentUser,
+  getSchoolById,
+  getSchools,
+  getStudentsBySchool,
+  getUserById,
+  updateSchool,
+  updateUserProfile,
+  updateUserSchool,
+} from '../services/apiClient';
 
 const USER_STORAGE_KEY = '@auth_user';
 const AUTH_TOKEN_STORAGE_KEY = '@auth_token';
@@ -42,7 +42,6 @@ const persistUser = async (user: User) => {
   try {
     await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   } catch (error) {
-    console.warn('Failed to persist user profile', error);
   }
 };
 
@@ -65,7 +64,7 @@ const useHydrateCurrentUserFromStorage = ({ queryClient }: HydrateFromStorageCon
           queryClient.setQueryData(USER_QUERY_KEY(parsedUser.id), parsedUser);
         }
       } catch (error) {
-        console.warn('Failed to hydrate user profile from storage', error);
+
       }
     };
 
@@ -90,7 +89,7 @@ const useHasAuthToken = () => {
           setHasToken(!!token);
         }
       } catch (error) {
-        console.warn('Failed to read auth token', error);
+  
         if (isMounted) {
           setHasToken(false);
         }
@@ -121,11 +120,7 @@ export const useCurrentUser = () => {
   return useQuery<User>({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: async () => {
-      console.log('🔍 useCurrentUser: Fetching from /users/me endpoint');
       const user = await getCurrentUser();
-      console.log('✅ useCurrentUser: User data received:', user);
-      console.log('📸 useCurrentUser: Photo field:', user.photo?.substring(0, 50) + '...');
-      console.log('📸 useCurrentUser: Photo type:', typeof user.photo);
       await persistUser(user);
       return user;
     },

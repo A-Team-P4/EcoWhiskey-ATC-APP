@@ -169,7 +169,7 @@ export const InstructorDashboardScreen = () => {
           return updated ? next : prev;
         });
       } catch (error) {
-        console.error('Failed to preload group member counts', error);
+        console.log('Failed to preload group member counts', error);
       }
     };
 
@@ -296,7 +296,7 @@ export const InstructorDashboardScreen = () => {
       }
       closeGroupModal();
     } catch (error) {
-      console.error('Failed to save group', error);
+      console.log('Failed to save group', error);
       Alert.alert('Error', 'No se pudo guardar el grupo. Intenta nuevamente.');
     }
   };
@@ -319,7 +319,7 @@ export const InstructorDashboardScreen = () => {
       }
       closeDeleteGroupModal();
     } catch (error) {
-      console.error('Failed to delete group', error);
+      console.log('Failed to delete group', error);
       Alert.alert('Error', 'No se pudo eliminar el grupo.');
     }
   };
@@ -357,7 +357,7 @@ export const InstructorDashboardScreen = () => {
       await refetchGroupMembers();
       await refetchGroups();
     } catch (error) {
-      console.error('Failed to add students', error);
+      console.log('Failed to add students', error);
       Alert.alert('Error', 'No se pudieron agregar los estudiantes.');
     }
   };
@@ -394,7 +394,7 @@ export const InstructorDashboardScreen = () => {
       await refetchGroupMembers();
       await refetchGroups();
     } catch (error) {
-      console.error('Failed to remove member', error);
+      console.log('Failed to remove member', error);
       Alert.alert('Error', 'No se pudo remover al estudiante.');
     }
   };
