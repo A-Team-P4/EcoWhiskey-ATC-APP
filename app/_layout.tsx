@@ -1,5 +1,4 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { NavigationWarningProvider } from '@/contexts/NavigationWarningContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -33,20 +32,20 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={paperTheme}>
         <QueryClientProvider client={queryClient}>
-          <NavigationWarningProvider>
-            <ProtectedRoute>
-              <Stack>
-                <Stack.Screen name="login" options={{ headerShown: false }} />
-                <Stack.Screen name="register" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
-                <Stack.Screen name="phase-detail" options={{ headerShown: false }} />
-                <Stack.Screen name="session-detail" options={{ headerShown: false }} />
-                <Stack.Screen name="group-members" options={{ headerShown: false }} />
-              </Stack>
-            </ProtectedRoute>
-            <StatusBar style="auto" />
-          </NavigationWarningProvider>
+          <ProtectedRoute>
+            <Stack>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="register" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="atc-practice" options={{ headerShown: false, animation: "fade" }} />
+              <Stack.Screen name="phase-detail" options={{ headerShown: false }} />
+              <Stack.Screen name="session-detail" options={{ headerShown: false }} />
+              <Stack.Screen name="instructor-dashboard" options={{ headerShown: false }} />
+              <Stack.Screen name="user-profile" options={{ headerShown: false }} />
+              <Stack.Screen name="group-members" options={{ headerShown: false }} />
+            </Stack>
+          </ProtectedRoute>
+          <StatusBar style="auto" />
         </QueryClientProvider>
       </PaperProvider>
     </GestureHandlerRootView>

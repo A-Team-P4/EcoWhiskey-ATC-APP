@@ -1,12 +1,10 @@
 import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { ThemedText } from '@/components/themed-text';
-import { useNavigationWarning } from '@/contexts/NavigationWarningContext';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { sendAudioForAnalysis } from '@/services/apiClient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Modal, Platform, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Switch } from 'react-native-paper';
@@ -33,9 +31,7 @@ export default function AudioInteractionScreen() {
 
   // Handle both sessionId (new session) and session_id (continued session)
   const sessionId = params.sessionId || params.session_id;
-  const navigation = useNavigation();
   const router = useRouter();
-  const { setShouldWarnBeforeNavigation, showWarningModal, confirmNavigation, cancelNavigation, setPendingNavigationFn } = useNavigationWarning();
 
   // Initialize state from params if continuing a session, otherwise use defaults
   const [feedbackText, setFeedbackText] = useState(
@@ -55,9 +51,10 @@ export default function AudioInteractionScreen() {
   const [enableAudioReview, setEnableAudioReview] = useState(true);
   const [silenceWarningShown, setSilenceWarningShown] = useState(false);
   const [sessionCompletedModalVisible, setSessionCompletedModalVisible] = useState(false);
+  const [previousControllerText, setPreviousControllerText] = useState('');
+  const [showPreviousController, setShowPreviousController] = useState(false);
   const drawerAnimation = React.useRef(new Animated.Value(0)).current;
   const silenceCheckTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingNavigationAction = React.useRef<any>(null);
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   // Settings drawer animation
@@ -116,73 +113,16 @@ export default function AudioInteractionScreen() {
           allowsRecording: true,
         });
 
-        console.log('🎤 Permissions granted and audio mode set');
+       
       } catch (error) {
-        console.error('Permission request failed:', error);
+       
         setFeedbackText('No se pudo obtener permiso del micrófono');
       }
     })();
   }, []);
 
-  // Enable/disable navigation warning based on session
-  useEffect(() => {
-    setShouldWarnBeforeNavigation(!!sessionId);
-
-    return () => {
-      setShouldWarnBeforeNavigation(false);
-    };
-  }, [sessionId, setShouldWarnBeforeNavigation]);
-
-  // Handle back button navigation (beforeRemove event)
-  useEffect(() => {
-    if (!sessionId) return;
-
-    const beforeRemoveListener = (e: any) => {
-      if (!sessionId) return;
-
-      // Prevent default behavior of leaving the screen
-      e.preventDefault();
-
-      // Store the navigation action to execute later if user confirms
-      pendingNavigationAction.current = e.data.action;
-
-      // Create the function that will execute when user confirms
-      const handleNavigation = async () => {
-        // Clean up session
-        try {
-          await AsyncStorage.removeItem(`@session_${sessionId}`);
-          console.log('🗑️ Session removed from storage:', sessionId);
-        } catch (error) {
-          console.error('Error removing session from storage:', error);
-        }
-
-        // Execute the stored navigation action
-        if (pendingNavigationAction.current) {
-          navigation.dispatch(pendingNavigationAction.current);
-          pendingNavigationAction.current = null;
-        }
-      };
-
-      // Directly set the pending navigation and show modal
-      setPendingNavigationFn(handleNavigation);
-    };
-
-    // Add the listener
-    const unsubscribe = navigation.addListener('beforeRemove', beforeRemoveListener);
-
-    // Cleanup listener on unmount
-    return unsubscribe;
-  }, [sessionId, navigation, setPendingNavigationFn]);
-
 
   //* HANDLERS
-
-  const handleConfirmExitWrapper = () => { confirmNavigation();  };
-
-  const handleCancelExitWrapper = () => {
-    cancelNavigation();
-    pendingNavigationAction.current = null;
-  };
 
   const startRecording = async () => {
     try {
@@ -285,7 +225,14 @@ export default function AudioInteractionScreen() {
     try {
       setIsLoadingResponse(true);
       setFeedbackText('');
+
+      // Save current controller text as previous before clearing
+      if (controllerText) {
+        setPreviousControllerText(controllerText);
+      }
+
       setControllerText('');
+      setShowPreviousController(false);
       const formattedFrequency = frequency.toFixed(3);
       const response = await sendAudioForAnalysis(audioUri, sessionId, formattedFrequency);
       setRecordedAudioUri(null);
@@ -346,13 +293,11 @@ export default function AudioInteractionScreen() {
 
   const handleGoToScores = () => {
     setSessionCompletedModalVisible(false);
-    setShouldWarnBeforeNavigation(false);
     router.replace('/(tabs)/ScoresTab');
   };
 
   const handleStartNewPractice = () => {
     setSessionCompletedModalVisible(false);
-    setShouldWarnBeforeNavigation(false);
     router.replace('/(tabs)/ATCTrainingTab');
   };
 
@@ -394,12 +339,22 @@ export default function AudioInteractionScreen() {
                - TID# {sessionIdSuffix}
               </ThemedText>
             </View>
-            <TouchableOpacity
-              onPress={toggleSettingsDrawer}
-              activeOpacity={0.6}
-            >
-              <Icon type="MaterialIcons" name="settings" color="#9CA3AF" size={20} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => router.push('/(tabs)/ATCTrainingTab')}
+                activeOpacity={0.6}
+              >
+                <ThemedText style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>
+                  Salir
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={toggleSettingsDrawer}
+                activeOpacity={0.6}
+              >
+                <Icon type="MaterialIcons" name="settings" color="#9CA3AF" size={20} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -491,45 +446,6 @@ export default function AudioInteractionScreen() {
         </View>
       </Modal>
 
-      {/* Exit confirmation modal */}
-      <Modal animationType="fade" transparent={true} visible={showWarningModal} onRequestClose={handleCancelExitWrapper}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 30, width: '80%', maxWidth: 400, ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' } : { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 16 }), elevation: 10 }}>
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Icon type="MaterialIcons" name="warning" color="#FF9800" size={48} />
-            </View>
-
-            <ThemedText style={{ fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#000' }}>
-              Terminar sesión
-            </ThemedText>
-
-            <ThemedText style={{ fontSize: 15, textAlign: 'center', marginBottom: 24, color: '#666', lineHeight: 22 }}>
-              Al salir de esta pantalla, tu sesión de práctica será terminada. ¿Deseas continuar?
-            </ThemedText>
-
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#e0e0e0' }}
-                onPress={handleCancelExitWrapper}
-              >
-                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#000' }}>
-                  Cancelar
-                </ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#EF4444' }}
-                onPress={handleConfirmExitWrapper}
-              >
-                <ThemedText style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
-                  Salir
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
       <View style={{ flex: 1, paddingHorizontal: 20, marginBottom: 24 }}>
         <View style={{ flex: 1, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', justifyContent: 'flex-start' }}>
           {isLoadingResponse && (
@@ -542,12 +458,49 @@ export default function AudioInteractionScreen() {
           )}
 
           {!isLoadingResponse && feedbackText && feedbackText !== 'Inicie comunicación con la torre de control. Presione el botón PTT para comenzar.' && (
-            <View style={{ marginBottom: controllerText ? 20 : 0 }}>
+            <View style={{ marginBottom: controllerText || showPreviousController ? 20 : 0 }}>
               <ThemedText style={{ fontSize: 14, fontWeight: 'bold', color: '#000', marginBottom: 8 }}>
                 Feedback:
               </ThemedText>
               <ThemedText style={{ fontSize: 15, lineHeight: 22, color: '#333' }}>
                 {feedbackText}
+              </ThemedText>
+
+              {/* Show "Ver anterior" button only when there's feedback but no current controller text */}
+              {!controllerText && previousControllerText && (
+                <TouchableOpacity
+                  onPress={() => setShowPreviousController(!showPreviousController)}
+                  activeOpacity={0.7}
+                  style={{
+                    marginTop: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    alignSelf: 'flex-start',
+                  }}
+                >
+                  <Icon
+                    type="MaterialIcons"
+                    name={showPreviousController ? 'visibility-off' : 'history'}
+                    color="#2196F3"
+                    size={18}
+                  />
+                  <ThemedText style={{ fontSize: 13, fontWeight: '600', color: '#2196F3' }}>
+                    {showPreviousController ? 'Ocultar instrucción anterior' : 'Ver instrucción anterior'}
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Show previous controller text when toggled */}
+          {!isLoadingResponse && showPreviousController && previousControllerText && !controllerText && (
+            <View style={{ marginBottom: 20 }}>
+              <ThemedText style={{ fontSize: 14, fontWeight: 'bold', color: '#000', marginBottom: 8 }}>
+                Instrucción Anterior del Controlador:
+              </ThemedText>
+              <ThemedText style={{ fontSize: 15, lineHeight: 22, color: '#666', fontFamily: 'monospace', fontStyle: 'italic' }}>
+                {previousControllerText}
               </ThemedText>
             </View>
           )}

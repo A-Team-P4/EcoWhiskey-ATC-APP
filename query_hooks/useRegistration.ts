@@ -11,7 +11,7 @@ export const useRegistration = () => {
       // You can add more success logic here like storing tokens
     },
     onError: (error) => {
-      console.error('Registration failed:', error);
+      console.log('Registration failed:', error);
     },
   });
 };

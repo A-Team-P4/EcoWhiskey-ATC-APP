@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -32,7 +32,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         router.replace('/(tabs)/ATCTrainingTab');
       }
     } catch (error) {
-      console.error('Error checking auth:', error);
+     
       setIsAuthenticated(false);
     } finally {
       setIsChecking(false);

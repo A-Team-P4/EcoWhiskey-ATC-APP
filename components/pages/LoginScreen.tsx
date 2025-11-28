@@ -1,9 +1,9 @@
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginCredentials } from '@/interfaces/user';
+import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
 import { useLogin } from '@/query_hooks/useLogin';
 import { getCurrentUser } from '@/services/apiClient';
-import { notifyAuthTokenChange } from '@/lib/authTokenEvents';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
@@ -49,12 +49,12 @@ const LoginScreen: React.FC = () => {
           router.replace(nextRoute);
           setIsCheckingStoredSession(false);
         } catch (validationError) {
-          console.warn('Stored auth token validation failed', validationError);
+          
           try {
             await AsyncStorage.multiRemove(['@auth_token', '@user_id', '@auth_user']);
             notifyAuthTokenChange(false);
           } catch (cleanupError) {
-            console.warn('Failed to clear invalid auth data', cleanupError);
+          
           } finally {
             if (isMounted) {
               setIsCheckingStoredSession(false);
@@ -62,7 +62,7 @@ const LoginScreen: React.FC = () => {
           }
         }
       } catch (error) {
-        console.warn('Failed to read auth data from storage', error);
+       
         if (isMounted) {
           setIsCheckingStoredSession(false);
         }
@@ -80,7 +80,7 @@ const LoginScreen: React.FC = () => {
     return new Promise<void>((resolve, reject) => {
       loginMutation.mutate(credentials, {
         onSuccess: (data) => {
-          console.log("En el login", data)
+         
           setServerError(null);
           resolve();
           const nextRoute =

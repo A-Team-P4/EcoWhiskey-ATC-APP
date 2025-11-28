@@ -244,7 +244,7 @@ function UpdateProfileScreen() {
       ]);
       showSnackbar('Abandonaste el grupo correctamente.', 'success');
     } catch (error: any) {
-      console.error('Failed to leave group', error);
+      console.log('Failed to leave group', error);
       const message =
         error?.response?.data?.message ??
         error?.message ??

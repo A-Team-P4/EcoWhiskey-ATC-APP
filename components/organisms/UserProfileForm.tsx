@@ -222,7 +222,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
       setPhotoPreview(previewSource);
       setPhotoPayload(base64Payload);
     } catch (error) {
-      console.error('Error selecting photo:', error);
+   
       setPhotoError('No se pudo seleccionar la foto.');
     } finally {
       setIsSelectingPhoto(false);

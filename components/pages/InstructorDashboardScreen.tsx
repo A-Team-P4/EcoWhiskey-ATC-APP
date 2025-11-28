@@ -170,7 +170,7 @@ export const InstructorDashboardScreen = () => {
           return updated ? next : prev;
         });
       } catch (error) {
-        console.error('Failed to preload group member counts', error);
+        console.log('Failed to preload group member counts', error);
       }
     };
 
