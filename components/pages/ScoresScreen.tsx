@@ -242,29 +242,6 @@ export default function ScoresScreen() {
 
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
-  // Use a ref to track if we just navigated with params
-  const justNavigatedRef = React.useRef(false);
-
-  // When params change (new navigation), mark as "just navigated"
-  React.useEffect(() => {
-    if (selectedUserId) {
-      justNavigatedRef.current = true;
-    }
-  }, [selectedUserId]);
-
-  // On focus, if we didn't just navigate, clear the params
-  useFocusEffect(
-    useCallback(() => {
-      if (justNavigatedRef.current) {
-        // We just navigated here with params, don't clear
-        justNavigatedRef.current = false;
-      } else if (viewingOtherUser) {
-        // Returning to tab with stale student data - clear it
-        router.setParams({ userId: undefined, userName: undefined });
-      }
-    }, [viewingOtherUser, router])
-  );
-
   const {
     data: history = [],
     isLoading: isHistoryLoading,
@@ -307,13 +284,29 @@ export default function ScoresScreen() {
   }, [activeUserId, refetchHistory, refetchPhasesScores, showSnackbar]);
 
   const handlePhasePress = useCallback(
-    (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
+    (phaseId: string) => {
+      const viewerParams = viewingOtherUser
+        ? { userId: activeUserId, userName: activeUserName }
+        : {};
+      router.push({
+        pathname: '/phase-detail',
+        params: { phaseId, phaseLabel: PHASE_LABELS[phaseId], ...viewerParams },
+      });
     },
-    [router],
+    [activeUserId, activeUserName, router, viewingOtherUser],
   );
 
   const handleSessionPress = useCallback(
-    (sessionId: string) => { router.push({ pathname: '/session-detail',  params: { sessionId }, }); }, [router],
+    (sessionId: string) => {
+      const viewerParams = viewingOtherUser
+        ? { userId: activeUserId, userName: activeUserName }
+        : {};
+      router.push({
+        pathname: '/session-detail',
+        params: { sessionId, ...viewerParams },
+      });
+    },
+    [activeUserId, activeUserName, router, viewingOtherUser],
   );
 
   const handleContinueSession = useCallback(
@@ -425,6 +418,16 @@ export default function ScoresScreen() {
                   {activeUserName}
                 </Typography>
               </View>
+              <TouchableOpacity
+                style={styles.viewerBannerButton}
+                onPress={() => clearSelectedUser()}
+                activeOpacity={0.8}
+              >
+                <Icon type="MaterialIcons" name="close" size={18} color="#2563EB" />
+                <Typography variant="caption" style={styles.viewerBannerButtonText}>
+                  Volver a mis datos
+                </Typography>
+              </TouchableOpacity>
             </View>
           </>
         )}

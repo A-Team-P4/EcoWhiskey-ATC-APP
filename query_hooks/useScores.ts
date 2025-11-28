@@ -5,14 +5,14 @@ import { getAllPhasesScores, getPhaseScores, getPhaseSummary, getSessionScores, 
 export const SESSION_SCORES_QUERY_KEY = (sessionId: string) =>
   ['scores', 'session', sessionId] as const;
 
-export const PHASE_SCORES_QUERY_KEY = (phaseId: string) =>
-  ['scores', 'phase', phaseId] as const;
+export const PHASE_SCORES_QUERY_KEY = (phaseId: string, userId?: string) =>
+  ['scores', 'phase', phaseId, userId ?? 'me'] as const;
 
 export const SESSION_SUMMARY_QUERY_KEY = (sessionId: string) =>
   ['scores', 'session', sessionId, 'summary'] as const;
 
-export const PHASE_SUMMARY_QUERY_KEY = (phaseId: string) =>
-  ['scores', 'phase', phaseId, 'summary'] as const;
+export const PHASE_SUMMARY_QUERY_KEY = (phaseId: string, userId?: string) =>
+  ['scores', 'phase', phaseId, 'summary', userId ?? 'me'] as const;
 
 export const useSessionScores = (sessionId?: string) =>
   useQuery<SessionScoresResponse>({
@@ -21,10 +21,10 @@ export const useSessionScores = (sessionId?: string) =>
     enabled: Boolean(sessionId),
   });
 
-export const usePhaseScores = (phaseId?: string) =>
+export const usePhaseScores = (phaseId?: string, userId?: string) =>
   useQuery<PhaseScoresResponse>({
-    queryKey: phaseId ? PHASE_SCORES_QUERY_KEY(phaseId) : ['scores', 'phase'],
-    queryFn: () => getPhaseScores(phaseId as string),
+    queryKey: phaseId ? PHASE_SCORES_QUERY_KEY(phaseId, userId) : ['scores', 'phase'],
+    queryFn: () => getPhaseScores(phaseId as string, userId),
     enabled: Boolean(phaseId),
   });
 
@@ -35,10 +35,12 @@ export const useSessionSummary = (sessionId?: string) =>
     enabled: Boolean(sessionId),
   });
 
-export const usePhaseSummary = (phaseId?: string) =>
+export const usePhaseSummary = (phaseId?: string, userId?: string) =>
   useQuery<PhaseSummaryResponse>({
-    queryKey: phaseId ? PHASE_SUMMARY_QUERY_KEY(phaseId) : ['scores', 'phase', 'summary'],
-    queryFn: () => getPhaseSummary(phaseId as string),
+    queryKey: phaseId
+      ? PHASE_SUMMARY_QUERY_KEY(phaseId, userId)
+      : ['scores', 'phase', 'summary'],
+    queryFn: () => getPhaseSummary(phaseId as string, userId),
     enabled: Boolean(phaseId),
   });
 

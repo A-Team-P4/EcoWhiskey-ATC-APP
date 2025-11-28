@@ -1,6 +1,18 @@
+import { Icon } from '@/components/atoms/Icon';
+import { Spacer } from '@/components/atoms/Spacer';
+import { Typography } from '@/components/atoms/Typography';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
+import { MultiSelectDropdown } from '@/components/molecules/MultiSelectDropdown';
+import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { GroupMembershipResponse } from '@/interfaces/group';
-import { useGroupMembers, useRemoveGroupMember } from '@/query_hooks/useGroups';
+import {
+  useAddGroupMember,
+  useGroup,
+  useGroupMembers,
+  useRemoveGroupMember,
+} from '@/query_hooks/useGroups';
+import { useCurrentUser, useStudentsBySchool } from '@/query_hooks/useUserProfile';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -12,11 +24,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { Icon } from '@/components/atoms/Icon';
-import { Spacer } from '@/components/atoms/Spacer';
-import { Typography } from '@/components/atoms/Typography';
-import { AppSnackbar } from '@/components/molecules/AppSnackbar';
-import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 
 export default function GroupMembersScreen() {
   const router = useRouter();
@@ -24,9 +31,20 @@ export default function GroupMembersScreen() {
   const groupId = typeof params.groupId === 'string' ? params.groupId : undefined;
   const groupName = typeof params.groupName === 'string' ? params.groupName : 'Grupo';
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
+  const { data: currentUser, isLoading: isCurrentUserLoading } = useCurrentUser();
+  const isInstructor = currentUser?.accountType === 'instructor';
+  const { data: groupData } = useGroup(groupId);
+  const displayGroupName = groupData?.name ?? groupName;
+  const schoolId = groupData?.schoolId ?? currentUser?.school?.id;
+  const {
+    data: schoolStudents = [],
+    isLoading: isStudentsLoading,
+  } = useStudentsBySchool(schoolId);
 
   const [memberToRemove, setMemberToRemove] = useState<GroupMembershipResponse | null>(null);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [addStudentsError, setAddStudentsError] = useState<string | null>(null);
 
   const {
     data: membersData = [],
@@ -34,12 +52,33 @@ export default function GroupMembersScreen() {
     refetch: refetchMembers,
   } = useGroupMembers(groupId);
 
+  const addGroupMemberMutation = useAddGroupMember();
   const removeGroupMemberMutation = useRemoveGroupMember();
 
   const studentMembers = useMemo(
     () => membersData.filter((m) => m.role === 'student'),
     [membersData]
   );
+
+  const availableStudentOptions = useMemo(() => {
+    if (!schoolStudents || schoolStudents.length === 0) {
+      return [];
+    }
+
+    const memberIds = new Set(
+      membersData
+        .map((member) => member.user?.id ?? member.userId)
+        .filter(Boolean)
+        .map((id) => String(id))
+    );
+
+    return schoolStudents
+      .filter((student) => !memberIds.has(String(student.id)))
+      .map((student) => ({
+        label: `${student.firstName} ${student.lastName} (${student.email})`,
+        value: String(student.id),
+      }));
+  }, [membersData, schoolStudents]);
 
   // Debug logging
   useEffect(() => {
@@ -56,6 +95,46 @@ export default function GroupMembersScreen() {
         userName: `${student.firstName} ${student.lastName}`,
       },
     });
+  };
+
+  const handleSelectStudents = (values: string[]) => {
+    setSelectedStudentIds(values);
+    if (values.length > 0) {
+      setAddStudentsError(null);
+    }
+  };
+
+  const handleAddStudents = async () => {
+    if (!groupId) return;
+    if (!isInstructor) {
+      showSnackbar('Solo instructores pueden agregar estudiantes.', 'error');
+      return;
+    }
+    if (selectedStudentIds.length === 0) {
+      setAddStudentsError('Selecciona al menos un estudiante.');
+      return;
+    }
+
+    try {
+      await Promise.all(
+        selectedStudentIds.map((userId) =>
+          addGroupMemberMutation.mutateAsync({
+            groupId,
+            payload: { userId },
+          })
+        )
+      );
+      showSnackbar('Estudiantes agregados al grupo.', 'success');
+      setSelectedStudentIds([]);
+      setAddStudentsError(null);
+      refetchMembers();
+    } catch (error: any) {
+      console.error('Failed to add students', error);
+      showSnackbar(
+        error?.response?.data?.message ?? 'No se pudieron agregar los estudiantes.',
+        'error'
+      );
+    }
   };
 
   const handleRemoveMemberRequest = (member: GroupMembershipResponse) => {
@@ -133,12 +212,72 @@ export default function GroupMembersScreen() {
             </Typography>
           </TouchableOpacity>
           <Spacer size={16} />
-          <Typography variant="h2">{groupName}</Typography>
+          <Typography variant="h2">{displayGroupName}</Typography>
           <Spacer size={4} />
           <Typography variant="caption" style={styles.subtitle}>
             Estudiantes del grupo
           </Typography>
           <Spacer size={24} />
+
+          {isInstructor ? (
+            <View style={styles.addCard}>
+              <Typography variant="h3" style={styles.addCardTitle}>
+                Agregar estudiantes
+              </Typography>
+              <Spacer size={8} />
+              {isStudentsLoading || isCurrentUserLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#2196F3" />
+                  <Spacer size={8} />
+                  <Typography variant="body">Cargando estudiantes disponibles...</Typography>
+                </View>
+              ) : !schoolId ? (
+                <Typography variant="body" style={styles.emptyText}>
+                  No se pudo obtener la escuela para cargar estudiantes.
+                </Typography>
+              ) : (
+                <>
+                  <MultiSelectDropdown
+                    label="Seleccionar estudiantes"
+                    values={selectedStudentIds}
+                    onSelect={handleSelectStudents}
+                    options={availableStudentOptions}
+                    placeholder={
+                      availableStudentOptions.length === 0
+                        ? 'Todos los estudiantes ya estan en el grupo'
+                        : 'Elige estudiantes para agregarlos'
+                    }
+                    error={addStudentsError ?? undefined}
+                    leftIconName="person-add"
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.addButton,
+                      (selectedStudentIds.length === 0 ||
+                        addGroupMemberMutation.isPending ||
+                        availableStudentOptions.length === 0) &&
+                        styles.addButtonDisabled,
+                    ]}
+                    onPress={handleAddStudents}
+                    disabled={
+                      selectedStudentIds.length === 0 ||
+                      addGroupMemberMutation.isPending ||
+                      availableStudentOptions.length === 0
+                    }
+                    activeOpacity={0.85}
+                  >
+                    {addGroupMemberMutation.isPending ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Typography variant="body" style={styles.addButtonText}>
+                        Agregar seleccionados
+                      </Typography>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          ) : null}
 
           {isMembersLoading ? (
             <View style={styles.loadingContainer}>
@@ -295,6 +434,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
+  },
+  addCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+    marginBottom: 12,
+  },
+  addCardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  addButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+  },
+  addButtonDisabled: {
+    opacity: 0.6,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
   },
   emptyState: {
     alignItems: 'center',

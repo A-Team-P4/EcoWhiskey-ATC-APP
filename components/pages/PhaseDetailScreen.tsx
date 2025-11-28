@@ -13,6 +13,7 @@ import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { usePhaseSummary } from '@/query_hooks/useScores';
+import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const formatDateTime = (isoDate?: string) => {
@@ -48,12 +49,22 @@ const getScoreLabel = (score: number) => {
 
 export default function PhaseDetailScreen() {
   const router = useRouter();
-  const { phaseId, phaseLabel } = useLocalSearchParams<{
+  const { phaseId, phaseLabel, userId, userName } = useLocalSearchParams<{
     phaseId: string;
     phaseLabel: string;
+    userId?: string;
+    userName?: string;
   }>();
+  const { data: currentUser } = useCurrentUser();
+  const targetUserId = typeof userId === 'string' ? userId : undefined;
+  const viewingOtherUser = Boolean(targetUserId && targetUserId !== currentUser?.id);
+  const supervisedName = viewingOtherUser
+    ? typeof userName === 'string'
+      ? userName
+      : 'Estudiante'
+    : null;
 
-  const { data, isLoading, error } = usePhaseSummary(phaseId);
+  const { data, isLoading, error } = usePhaseSummary(phaseId, targetUserId);
 
   const averageScore = data?.average_score ?? 0;
   const scoreColor = getScoreColor(averageScore);
@@ -88,6 +99,22 @@ export default function PhaseDetailScreen() {
             </Typography>
           </View>
         </View>
+
+        {viewingOtherUser && (
+          <>
+            <Spacer size={12} />
+            <View style={styles.viewerBanner}>
+              <View>
+                <Typography variant="caption" style={styles.viewerBannerLabel}>
+                  Estas supervisando a
+                </Typography>
+                <Typography variant="h3" style={styles.viewerBannerName}>
+                  {supervisedName}
+                </Typography>
+              </View>
+            </View>
+          </>
+        )}
 
         <Spacer size={16} />
 
@@ -265,6 +292,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+  },
+  viewerBanner: {
+    backgroundColor: '#E0E7FF',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  viewerBannerLabel: {
+    fontSize: 12,
+    color: '#1E3A8A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  viewerBannerName: {
+    color: '#1E40AF',
+    fontWeight: '600',
   },
   scoreCard: {
     backgroundColor: '#f8f8f9',
