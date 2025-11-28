@@ -463,21 +463,32 @@ export const getSessionScores = async (sessionId: string) => {
 };
 
 // Get scores for a specific phase across all sessions
-export const getPhaseScores = async (phaseId: string) => {
-  console.log('📊 [SCORES API] Requesting phase scores');
-  console.log('📊 [SCORES API] Phase ID:', phaseId);
-  console.log('📊 [SCORES API] Endpoint:', `/scores/phase/${phaseId}`);
-  console.log('📊 [SCORES API] Full URL:', `${API_BASE_URL}/scores/phase/${phaseId}`);
+export const getPhaseScores = async (phaseId: string, userId?: string) => {
+  console.log('dY"S [SCORES API] Requesting phase scores');
+  console.log('dY"S [SCORES API] Phase ID:', phaseId);
+  console.log('dY"S [SCORES API] User ID:', userId);
+
+  const params = new URLSearchParams();
+  if (userId) {
+    // Backend expects camelCase userId
+    params.append('userId', userId);
+  }
+
+  const queryString = params.toString();
+  const endpoint = queryString ? `/scores/phase/${phaseId}?${queryString}` : `/scores/phase/${phaseId}`;
+
+  console.log('dY"S [SCORES API] Endpoint:', endpoint);
+  console.log('dY"S [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
 
   try {
-    const response = await apiClient.get(`/scores/phase/${phaseId}`);
+    const response = await apiClient.get(endpoint);
 
-    console.log('✅ [SCORES API] Phase scores response received');
-    console.log('✅ [SCORES API] Status:', response.status);
-    console.log('✅ [SCORES API] Phase ID:', phaseId);
-    console.log('✅ [SCORES API] Average Score:', response.data?.average_score);
-    console.log('✅ [SCORES API] Total Scores:', response.data?.total_scores);
-    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('✔o. [SCORES API] Phase scores response received');
+    console.log('✔o. [SCORES API] Status:', response.status);
+    console.log('✔o. [SCORES API] Phase ID:', phaseId);
+    console.log('✔o. [SCORES API] Average Score:', response.data?.average_score);
+    console.log('✔o. [SCORES API] Total Scores:', response.data?.total_scores);
+    console.log('✔o. [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {
@@ -501,7 +512,8 @@ export const getAllPhasesScores = async (phaseIds?: string[], userId?: string) =
     params.append('phase_ids', phaseIds.join(','));
   }
   if (userId) {
-    params.append('user_id', userId);
+    // Backend expects camelCase userId; using snake_case makes FastAPI ignore it
+    params.append('userId', userId);
   }
 
   const queryString = params.toString();
@@ -529,23 +541,34 @@ export const getAllPhasesScores = async (phaseIds?: string[], userId?: string) =
     throw error;
   }
 };
-// Get phase summary// Get phase summary with LLM-generated feedback
-export const getPhaseSummary = async (phaseId: string) => {
-  console.log('🤖 [SCORES API] Requesting phase summary with LLM analysis');
-  console.log('🤖 [SCORES API] Phase ID:', phaseId);
-  console.log('🤖 [SCORES API] Endpoint:', `/scores/phase/${phaseId}/summary`);
-  console.log('🤖 [SCORES API] Full URL:', `${API_BASE_URL}/scores/phase/${phaseId}/summary`);
+// Get phase summary with LLM-generated feedback
+export const getPhaseSummary = async (phaseId: string, userId?: string) => {
+  console.log('dY- [SCORES API] Requesting phase summary with LLM analysis');
+  console.log('dY- [SCORES API] Phase ID:', phaseId);
+  console.log('dY- [SCORES API] User ID:', userId);
+
+  const params = new URLSearchParams();
+  if (userId) {
+    // Backend expects camelCase userId
+    params.append('userId', userId);
+  }
+
+  const queryString = params.toString();
+  const endpoint = queryString ? `/scores/phase/${phaseId}/summary?${queryString}` : `/scores/phase/${phaseId}/summary`;
+
+  console.log('dY- [SCORES API] Endpoint:', endpoint);
+  console.log('dY- [SCORES API] Full URL:', `${API_BASE_URL}${endpoint}`);
 
   try {
-    const response = await apiClient.get(`/scores/phase/${phaseId}/summary`);
+    const response = await apiClient.get(endpoint);
 
-    console.log('✅ [SCORES API] Phase summary response received');
-    console.log('✅ [SCORES API] Status:', response.status);
-    console.log('✅ [SCORES API] Phase ID:', phaseId);
-    console.log('✅ [SCORES API] Average Score:', response.data?.average_score);
-    console.log('✅ [SCORES API] Total Scores:', response.data?.total_scores);
-    console.log('✅ [SCORES API] Summary length:', response.data?.summary?.length);
-    console.log('✅ [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
+    console.log('✔o. [SCORES API] Phase summary response received');
+    console.log('✔o. [SCORES API] Status:', response.status);
+    console.log('✔o. [SCORES API] Phase ID:', phaseId);
+    console.log('✔o. [SCORES API] Average Score:', response.data?.average_score);
+    console.log('✔o. [SCORES API] Total Scores:', response.data?.total_scores);
+    console.log('✔o. [SCORES API] Summary length:', response.data?.summary?.length);
+    console.log('✔o. [SCORES API] Response data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {

@@ -42,6 +42,7 @@ export default function RootLayout() {
               <Stack.Screen name="session-detail" options={{ headerShown: false }} />
               <Stack.Screen name="instructor-dashboard" options={{ headerShown: false }} />
               <Stack.Screen name="user-profile" options={{ headerShown: false }} />
+              <Stack.Screen name="group-members" options={{ headerShown: false }} />
             </Stack>
           </ProtectedRoute>
           <StatusBar style="auto" />

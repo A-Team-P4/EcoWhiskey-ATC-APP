@@ -3,7 +3,7 @@ import { School, User } from '@/interfaces/user';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
 import { ActionButton } from '../molecules/ActionButton';
@@ -237,17 +237,20 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
   return (
     <View style={formStyles.container}>
-      {/* Profile Header */}
-      <View style={formStyles.header}>
-        <Typography variant="h2" style={formStyles.headerTitle}>
+      {/* Profile Header - Consistent with ScoresScreen */}
+      <View style={formStyles.headerContainer}>
+        <Typography variant="h1" style={formStyles.title}>
           Mi Perfil
-        </Typography>
-        <Typography variant="body" style={formStyles.headerSubtitle}>
-          Actualiza tu información personal
         </Typography>
       </View>
 
-      <Spacer size={16} />
+      <Spacer size={12} />
+
+      <Typography variant="caption" style={formStyles.subtitle}>
+        Actualiza tu información personal y configuración de cuenta
+      </Typography>
+
+      <Spacer size={24} />
 
       <View
         style={[
@@ -304,8 +307,14 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
       <Spacer size={24} />
 
-      {/* Non-editable fields */}
-      <View style={formStyles.infoSection}>
+      {/* Account Information Cards */}
+      <Typography variant="h3" style={formStyles.sectionTitle}>
+        Información de la cuenta
+      </Typography>
+
+      <Spacer size={12} />
+
+      <View style={formStyles.infoCard}>
         <View style={formStyles.infoRow}>
           <Typography variant="caption" style={formStyles.infoLabel}>
             Correo electrónico
@@ -314,7 +323,9 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {userData.email}
           </Typography>
         </View>
+      </View>
 
+      <View style={formStyles.infoCard}>
         <View style={formStyles.infoRow}>
           <Typography variant="caption" style={formStyles.infoLabel}>
             Tipo de cuenta
@@ -323,7 +334,9 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {userData.accountType === 'student' ? 'Estudiante' : 'Instructor'}
           </Typography>
         </View>
+      </View>
 
+      <View style={formStyles.infoCard}>
         <View style={formStyles.infoRow}>
           <Typography variant="caption" style={formStyles.infoLabel}>
             Escuela actual
@@ -332,35 +345,37 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {userData.school?.name ?? 'Sin escuela asignada'}
           </Typography>
         </View>
+      </View>
 
-        <View style={formStyles.infoRow}>
-          <Typography variant="caption" style={formStyles.infoLabel}>
-            Grupos asignados
+      {/* Groups Section */}
+      <Spacer size={16} />
+
+      <Typography variant="h3" style={formStyles.sectionTitle}>
+        Grupos asignados
+      </Typography>
+
+      <Spacer size={12} />
+
+      {isGroupsLoading ? (
+        <View style={formStyles.infoCard}>
+          <Typography variant="body" style={formStyles.infoValue}>
+            Cargando grupos...
           </Typography>
-          {isGroupsLoading ? (
-            <Typography variant="body" style={formStyles.infoValue}>
-              Cargando grupos...
-            </Typography>
-          ) : normalizedGroups.length > 0 ? (
-            <View style={formStyles.groupListContainer}>
-              {normalizedGroups.map((group) => (
-                <View key={group.id} style={formStyles.groupListItem}>
-                  <Typography variant="body" style={formStyles.infoValue}>
-                    {group.name}
-                  </Typography>
-                  {group.description ? (
-                    <Typography variant="caption" style={formStyles.groupDescription}>
-                      {group.description}
-                    </Typography>
-                  ) : null}
-                </View>
-              ))}
+        </View>
+      ) : normalizedGroups.length > 0 ? (
+        <>
+          {normalizedGroups.map((group) => (
+            <View key={group.id} style={formStyles.groupCard}>
+              <Typography variant="body" style={formStyles.groupName}>
+                {group.name}
+              </Typography>
+              {group.description ? (
+                <Typography variant="caption" style={formStyles.groupDescription}>
+                  {group.description}
+                </Typography>
+              ) : null}
             </View>
-          ) : (
-            <Typography variant="body" style={formStyles.infoValue}>
-              Sin grupos asignados
-            </Typography>
-          )}
+          ))}
           {canLeaveGroup && onLeaveGroup ? (
             <View style={formStyles.leaveGroupContainer}>
               <ActionButton
@@ -376,8 +391,14 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
               </Typography>
             </View>
           ) : null}
+        </>
+      ) : (
+        <View style={formStyles.infoCard}>
+          <Typography variant="body" style={formStyles.infoValue}>
+            Sin grupos asignados
+          </Typography>
         </View>
-      </View>
+      )}
 
       <Spacer size={24} />
 
@@ -446,6 +467,21 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({
 };
 
 const formStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    opacity: 0.7,
+  },
   photoSection: {
     alignItems: 'center',
     gap: 16,
@@ -484,25 +520,24 @@ const formStyles = StyleSheet.create({
   photoError: {
     color: '#FF3B30',
   },
-  container: {
-    flex: 1,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
   },
-  header: {
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    opacity: 0.6,
-  },
-  infoSection: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+  infoCard: {
+    backgroundColor: '#f8f8f9',
     borderRadius: 12,
     padding: 16,
-    gap: 12,
+    marginBottom: 12,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+    }),
+    elevation: 3,
   },
   infoRow: {
     gap: 4,
@@ -516,29 +551,33 @@ const formStyles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
   },
+  groupCard: {
+    backgroundColor: '#f8f8f9',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+    }),
+    elevation: 3,
+  },
+  groupName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
   groupDescription: {
     fontSize: 14,
-    color: '#4B5563',
+    color: '#6B7280',
   },
   schoolLockMessage: {
-    marginTop: 8,
+    marginTop: -16,
     color: '#DC2626',
-  },
-  groupListContainer: {
-    width: '100%',
-    gap: 12,
-    marginTop: 8,
-  },
-  groupListItem: {
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
-    borderRadius: 8,
-    padding: 12,
-    gap: 4,
-    backgroundColor: '#fff',
-  },
-  groupMeta: {
-    color: '#6B7280',
   },
   leaveGroupContainer: {
     marginTop: 8,

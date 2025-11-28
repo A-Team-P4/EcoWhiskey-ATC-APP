@@ -13,6 +13,7 @@ import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
 import { useSessionSummary } from '@/query_hooks/useScores';
+import { useCurrentUser } from '@/query_hooks/useUserProfile';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 // Phase labels mapping
@@ -66,7 +67,18 @@ const formatDateTime = (isoDate?: string) => {
 
 export default function SessionDetailScreen() {
   const router = useRouter();
-  const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
+  const { sessionId, userId, userName } = useLocalSearchParams<{
+    sessionId: string;
+    userId?: string;
+    userName?: string;
+  }>();
+  const { data: currentUser } = useCurrentUser();
+  const viewingOtherUser = Boolean(userId && userId !== currentUser?.id);
+  const supervisedName = viewingOtherUser
+    ? typeof userName === 'string'
+      ? userName
+      : 'Estudiante'
+    : null;
 
   const { data, isLoading, error } = useSessionSummary(sessionId);
 
@@ -101,6 +113,22 @@ export default function SessionDetailScreen() {
             </Typography>
           </View>
         </View>
+
+        {viewingOtherUser && (
+          <>
+            <Spacer size={12} />
+            <View style={styles.viewerBanner}>
+              <View>
+                <Typography variant="caption" style={styles.viewerBannerLabel}>
+                  Estas supervisando a
+                </Typography>
+                <Typography variant="h3" style={styles.viewerBannerName}>
+                  {supervisedName}
+                </Typography>
+              </View>
+            </View>
+          </>
+        )}
 
         <Spacer size={16} />
 
@@ -302,6 +330,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+  },
+  viewerBanner: {
+    backgroundColor: '#E0E7FF',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  viewerBannerLabel: {
+    fontSize: 12,
+    color: '#1E3A8A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  viewerBannerName: {
+    color: '#1E40AF',
+    fontWeight: '600',
   },
   scoreCard: {
     backgroundColor: '#f8f8f9',

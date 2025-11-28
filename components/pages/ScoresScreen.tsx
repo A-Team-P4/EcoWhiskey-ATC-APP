@@ -284,13 +284,29 @@ export default function ScoresScreen() {
   }, [activeUserId, refetchHistory, refetchPhasesScores, showSnackbar]);
 
   const handlePhasePress = useCallback(
-    (phaseId: string) => { router.push({ pathname: '/phase-detail', params: { phaseId, phaseLabel: PHASE_LABELS[phaseId] }, });
+    (phaseId: string) => {
+      const viewerParams = viewingOtherUser
+        ? { userId: activeUserId, userName: activeUserName }
+        : {};
+      router.push({
+        pathname: '/phase-detail',
+        params: { phaseId, phaseLabel: PHASE_LABELS[phaseId], ...viewerParams },
+      });
     },
-    [router],
+    [activeUserId, activeUserName, router, viewingOtherUser],
   );
 
   const handleSessionPress = useCallback(
-    (sessionId: string) => { router.push({ pathname: '/session-detail',  params: { sessionId }, }); }, [router],
+    (sessionId: string) => {
+      const viewerParams = viewingOtherUser
+        ? { userId: activeUserId, userName: activeUserName }
+        : {};
+      router.push({
+        pathname: '/session-detail',
+        params: { sessionId, ...viewerParams },
+      });
+    },
+    [activeUserId, activeUserName, router, viewingOtherUser],
   );
 
   const handleContinueSession = useCallback(
@@ -355,9 +371,7 @@ export default function ScoresScreen() {
 
   const isBusy = isUserLoading || isHistoryLoading || isPhasesLoading;
   const canManageSessions = !viewingOtherUser;
-  const clearSelectedUser = useCallback(() => {
-    router.replace('/(tabs)/ScoresTab');
-  }, [router]);
+  const clearSelectedUser = useCallback(() => { router.replace('/(tabs)/ScoresTab');  }, [router]);
 
   return (
     <ResponsiveLayout showTopNav={true}>
@@ -404,6 +418,16 @@ export default function ScoresScreen() {
                   {activeUserName}
                 </Typography>
               </View>
+              <TouchableOpacity
+                style={styles.viewerBannerButton}
+                onPress={() => clearSelectedUser()}
+                activeOpacity={0.8}
+              >
+                <Icon type="MaterialIcons" name="close" size={18} color="#2563EB" />
+                <Typography variant="caption" style={styles.viewerBannerButtonText}>
+                  Volver a mis datos
+                </Typography>
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -483,7 +507,7 @@ export default function ScoresScreen() {
           <>
             {history.length === 0 ? (
               <View style={styles.centerContent}>
-                <Icon type="MaterialIcons" name="assignment-outlined" size={64} color="#9CA3AF" />
+                <Icon type="MaterialIcons" name="assignment" size={64} color="#9CA3AF" />
                 <Spacer size={16} />
                 <Typography variant="h3" style={styles.emptyTitle}>
                   {viewingOtherUser

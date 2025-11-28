@@ -1,11 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 import { Spacer } from '@/components/atoms/Spacer';
 import { Typography } from '@/components/atoms/Typography';
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
 import { ChangePasswordForm } from '@/components/organisms/ChangePasswordForm';
 import { UserProfileForm } from '@/components/organisms/UserProfileForm';
 import ResponsiveLayout from '@/components/templates/ResponsiveLayout';
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { ChangePasswordPayload, UpdateUserPayload, User } from '@/interfaces/user';
 import { useGroupsByUser, useRemoveGroupMember } from '@/query_hooks/useGroups';
 import {
@@ -32,6 +34,7 @@ type PasswordFormSubmission = {
 
 function UpdateProfileScreen() {
   const queryClient = useQueryClient();
+  const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const {
     data: currentUser,
@@ -79,7 +82,7 @@ function UpdateProfileScreen() {
       queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? currentUser;
 
     if (!latestUser) {
-      Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
+      showSnackbar('No se pudo identificar al usuario autenticado.', 'error');
       return;
     }
 
@@ -121,7 +124,7 @@ function UpdateProfileScreen() {
       data.schoolId &&
       data.schoolId !== (latestUser.school?.id ?? '')
     ) {
-      Alert.alert('Cambio no permitido', lockReasonMessage ?? 'No puedes modificar la escuela.');
+      showSnackbar(lockReasonMessage ?? 'No puedes modificar la escuela.', 'error');
       return;
     }
 
@@ -135,16 +138,16 @@ function UpdateProfileScreen() {
     }
 
     if (updatePromises.length === 0) {
-      Alert.alert('Sin cambios', 'No hay cambios para guardar.');
+      showSnackbar('No hay cambios para guardar.', 'info');
       return;
     }
 
     try {
       await Promise.all(updatePromises);
-      Alert.alert('Perfil actualizado', 'Perfil actualizado exitosamente.');
+      showSnackbar('Perfil actualizado exitosamente.', 'success');
     } catch (error) {
-    
-      Alert.alert('Error', 'Error al actualizar el perfil.');
+      console.error('Error updating profile:', error);
+      showSnackbar('Error al actualizar el perfil.', 'error');
     }
   };
 
@@ -153,7 +156,7 @@ function UpdateProfileScreen() {
       queryClient.getQueryData<User>(CURRENT_USER_QUERY_KEY) ?? currentUser;
 
     if (!latestUser) {
-      Alert.alert('Sin usuario', 'No se pudo identificar al usuario autenticado.');
+      showSnackbar('No se pudo identificar al usuario autenticado.', 'error');
       throw new Error('USER_NOT_AVAILABLE');
     }
 
@@ -169,10 +172,10 @@ function UpdateProfileScreen() {
       });
       const successMessage =
         response?.message ?? 'Contrasena actualizada correctamente.';
-      Alert.alert('Contrasena actualizada', successMessage);
+      showSnackbar(successMessage, 'success');
     } catch (error) {
-    
-      Alert.alert('Error', 'No se pudo cambiar la contrasena. Intenta nuevamente.');
+      console.error('Error changing password:', error);
+      showSnackbar('No se pudo cambiar la contrasena. Intenta nuevamente.', 'error');
       throw (error instanceof Error ? error : new Error('CHANGE_PASSWORD_FAILED'));
     }
   };
@@ -239,14 +242,14 @@ function UpdateProfileScreen() {
         queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY }),
         refetchCurrentUser(),
       ]);
-      Alert.alert('Grupo', 'Abandonaste el grupo correctamente.');
+      showSnackbar('Abandonaste el grupo correctamente.', 'success');
     } catch (error: any) {
       console.log('Failed to leave group', error);
       const message =
         error?.response?.data?.message ??
         error?.message ??
         'No se pudo abandonar el grupo. Intenta nuevamente.';
-      Alert.alert('Error', message);
+      showSnackbar(message, 'error');
     }
   };
 
@@ -278,6 +281,14 @@ function UpdateProfileScreen() {
           isLoading={isPasswordLoading}
         />
       </ScrollView>
+
+      {/* Snackbar */}
+      <AppSnackbar
+        visible={snackbar.visible}
+        message={snackbar.message}
+        type={snackbar.type}
+        onDismiss={hideSnackbar}
+      />
     </ResponsiveLayout>
   );
 }
