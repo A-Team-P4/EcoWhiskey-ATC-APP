@@ -212,8 +212,7 @@ export default function AudioInteractionScreen() {
   const discardRecording = () => {
     setRecordedAudioUri(null);
     setFeedbackText('Grabación descartada. Presiona PTT para grabar de nuevo.');
-    setControllerText('');
-    setDisplayedControllerText('');
+    // Don't clear controllerText - keep the previous response visible
   };
 
   const sendAudioToBackend = async (audioUri: string) => {

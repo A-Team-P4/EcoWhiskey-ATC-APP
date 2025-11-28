@@ -87,9 +87,7 @@ export const TopNavigation: React.FC = () => {
 
   const handleInstructorDashboardPress = () => {
     setShowAccountMenu(false);
-    requestNavigation(() => {
       router.push('/(tabs)/InstructorDashboardTab');
-    });
   };
 
  
