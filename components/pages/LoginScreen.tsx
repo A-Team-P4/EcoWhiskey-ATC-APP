@@ -77,31 +77,24 @@ const LoginScreen: React.FC = () => {
   }, [router]);
 
   const handleLogin = async (credentials: LoginCredentials) => {
-    return new Promise<void>((resolve, reject) => {
-      loginMutation.mutate(credentials, {
-        onSuccess: (data) => {
-         
-          setServerError(null);
-          resolve();
-          const nextRoute =
-            data.accountType === "instructor"
-              ? '/(tabs)/InstructorDashboardTab'
-              : '/(tabs)/ATCTrainingTab';
-          router.replace(nextRoute);
-        },
-        onError: (error: any) => {
-          const statusCode = error?.response?.status;
-          const backendMessage = error?.response?.data?.message;
+    try {
+      const data = await loginMutation.mutateAsync(credentials);
+      setServerError(null);
+      const nextRoute =
+        data.accountType === 'instructor'
+          ? '/(tabs)/InstructorDashboardTab'
+          : '/(tabs)/ATCTrainingTab';
+      router.replace(nextRoute);
+    } catch (error: any) {
+      const statusCode = error?.response?.status;
+      const backendMessage = error?.response?.data?.message;
 
-          const message =
-            statusCode === 401
-              ? backendMessage ?? 'Credenciales incorrectas. Verifica tu correo y contrasena.'
-              : backendMessage ?? 'No se pudo iniciar sesion. Verifica tus credenciales.';
-          setServerError(message);
-          reject(error);
-        },
-      });
-    });
+      const message =
+        statusCode === 401
+          ? backendMessage ?? 'Credenciales incorrectas. Verifica tu correo y contrasena.'
+          : backendMessage ?? 'No se pudo iniciar sesion. Verifica tus credenciales.';
+      setServerError(message);
+    }
   };
 
   if (isCheckingStoredSession) {

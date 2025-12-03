@@ -1,3 +1,5 @@
+import { AppSnackbar } from '@/components/molecules/AppSnackbar';
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { RegistrationData } from '@/interfaces/user';
 import { useRegistration } from '@/query_hooks/useRegistration';
 import { useRouter } from 'expo-router';
@@ -7,8 +9,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { RegistrationForm } from '../organisms/RegistrationForm';
 import { WelcomeSection } from '../organisms/WelcomeSection';
 import ResponsiveLayout from '../templates/ResponsiveLayout';
-import { AppSnackbar } from '@/components/molecules/AppSnackbar';
-import { useSnackbar } from '@/hooks/useSnackbar';
 
 
 export default function RegisterScreen() {
@@ -17,18 +17,23 @@ export default function RegisterScreen() {
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
   const handleRegistration = async (data: RegistrationData) => {
-    return new Promise<void>((resolve, reject) => {
-      registrationMutation.mutate(data, {
-        onSuccess: () => {
-          resolve();
-          handleRegistrationSuccess();
-        },
-        onError: (error: any) => {
-          reject(error);
-          handleRegistrationError(error?.response?.data?.message || 'Ocurrió un error durante el registro');
-        }
-      });
-    });
+    try {
+      await registrationMutation.mutateAsync(data);
+      handleRegistrationSuccess();
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const backendMessage = error?.response?.data?.message || error?.response?.data?.detail;
+
+      if (status === 409) {
+        handleRegistrationError(
+          
+            'Error al registrar usuario.'
+        );
+        return;
+      }
+
+      handleRegistrationError(backendMessage || 'Ocurrió un error durante el registro');
+    }
   };
 
  const handleRegistrationSuccess = () => {
