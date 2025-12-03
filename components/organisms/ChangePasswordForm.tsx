@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { isPasswordSecure, PASSWORD_REQUIREMENT_MESSAGE } from '@/utils/password';
 import { Icon } from '../atoms/Icon';
 import { Spacer } from '../atoms/Spacer';
 import { Typography } from '../atoms/Typography';
@@ -24,8 +25,6 @@ interface ChangePasswordFormProps {
   isLoading?: boolean;
 }
 
-const MIN_PASSWORD_LENGTH = 8;
-
 export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   onSubmit,
   isLoading = false,
@@ -47,8 +46,8 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
 
     if (!values.newPassword) {
       nextErrors.newPassword = 'Ingresa una nueva contraseña';
-    } else if (values.newPassword.length < MIN_PASSWORD_LENGTH) {
-      nextErrors.newPassword = 'Debe tener al menos 8 caracteres';
+    } else if (!isPasswordSecure(values.newPassword)) {
+      nextErrors.newPassword = PASSWORD_REQUIREMENT_MESSAGE;
     }
 
     if (!values.confirmPassword) {
@@ -62,10 +61,39 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   };
 
   const handleFieldChange = (field: keyof ChangePasswordFormValues, value: string) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    if (errors[field] && value.trim()) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
+    const nextValues = { ...values, [field]: value };
+    setValues(nextValues);
+
+    setErrors(prev => {
+      const nextErrors: ChangePasswordErrors = { ...prev };
+
+      if (field === 'currentPassword' && value.trim()) {
+        nextErrors.currentPassword = undefined;
+      }
+
+      if (field === 'newPassword') {
+        if (nextErrors.newPassword && isPasswordSecure(value)) {
+          nextErrors.newPassword = undefined;
+        }
+        if (
+          nextErrors.confirmPassword &&
+          nextValues.confirmPassword &&
+          nextValues.confirmPassword === value
+        ) {
+          nextErrors.confirmPassword = undefined;
+        }
+      }
+
+      if (
+        field === 'confirmPassword' &&
+        nextErrors.confirmPassword &&
+        value === nextValues.newPassword
+      ) {
+        nextErrors.confirmPassword = undefined;
+      }
+
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async () => {
@@ -97,7 +125,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
               Seguridad
             </Typography>
             <Typography variant="body" style={styles.subheading}>
-              Cambia tu contraseña con al menos 8 caracteres.
+              {PASSWORD_REQUIREMENT_MESSAGE}
             </Typography>
           </View>
           <View style={styles.iconContainer}>

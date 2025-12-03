@@ -1,5 +1,6 @@
 import { RegistrationData } from '@/interfaces/user';
 import { useSchools } from '@/query_hooks/useUserProfile';
+import { isPasswordSecure, PASSWORD_REQUIREMENT_MESSAGE } from '@/utils/password';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
@@ -95,11 +96,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
-  
-  const validatePassword = (password: string): boolean => {
-    return password.length >= 8 && /(?=.*[a-zA-Z])(?=.*\d)/.test(password);
-  };
-  
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     
@@ -108,8 +105,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
     if (!email.trim()) newErrors.email = 'El correo es requerido';
     else if (!validateEmail(email)) newErrors.email = 'Formato de correo inválido';
     if (!password) newErrors.password = 'La contraseña es requerida';
-    else if (!validatePassword(password)) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres, incluyendo letras y números';
+    else if (!isPasswordSecure(password)) {
+      newErrors.password = PASSWORD_REQUIREMENT_MESSAGE;
     }
     if (!confirmPassword) newErrors.confirmPassword = 'La confirmación de contraseña es requerida';
     else if (password !== confirmPassword) {
@@ -171,7 +168,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, is
   
   const handlePasswordChange = (value: string) => {
     setPassword(value);
-    if (errors.password && validatePassword(value)) {
+    if (errors.password && isPasswordSecure(value)) {
       setErrors(prev => ({ ...prev, password: undefined }));
     }
     if (confirmPassword && value === confirmPassword && errors.confirmPassword) {
