@@ -26,7 +26,7 @@ export default function RegisterScreen() {
 
       if (status === 409) {
         handleRegistrationError(
-          backendMessage ||
+          
             'Error al registrar usuario.'
         );
         return;
